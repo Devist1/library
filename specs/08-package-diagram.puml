@@ -1,0 +1,411 @@
+@startuml
+' ==========================================================
+' 08 包图（Package Diagram）—— 分层架构 + 模块划分 + 依赖方向
+' 依据：specs/07-architecture.md v1.0（§3 架构总览、§3.3 MVC 落点、§5 包结构与目录、§5.3 模块间依赖规则）
+' 上游：specs/02-requirements.md v1.1、specs/05-domain-model.md v1.1、specs/03-use-cases.md v1.0、specs/constitution.md
+' 状态：草稿，待人工审查（constitution 第四条）
+'
+' 读图约定：
+'   ① 顶层包固定 5 个：common / presentation / application / domain / infrastructure（07 §5.1）
+'   ② 二级包 = 7 个业务模块（reader / card / catalog / circulation / reservation / fine / admin）
+'      + 横切子包（advice / common / support / persistence / policy / security / scheduling / audit / config / seed）
+'   ③ DTO 位于应用层各模块的 dto 子包（application.<module>.dto）：表现层依赖 DTO，领域层不依赖 DTO
+'   ④ Test Layer 位于 src/test/java，测试期允许跨层依赖（与运行时依赖规则不同）
+'   ⑤ 红色点线 = 禁止的依赖（反例标注，仅用于表达禁令，不得实现）
+' ==========================================================
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam ArrowFontSize 10
+skinparam PackageFontSize 12
+skinparam ClassFontSize 11
+skinparam StereotypeFontSize 9
+skinparam wrapWidth 180
+skinparam nodesep 12
+skinparam ranksep 40
+
+title 图书管理系统 —— 包图（四层分层架构 + MVC + 7 个业务模块）\n依据 specs/07-architecture.md v1.0
+
+' ==========================================================
+' 一、图例
+' ==========================================================
+legend right
+  <b>依赖方向（运行时，自上而下单向）</b>
+  实线箭头   = 允许的依赖（表现层 → 应用层 → 领域层）
+  蓝色虚线   = 实现 / 供应（基础设施层实现领域层接口，依赖倒置）
+  红色点线   = <b>禁止</b>的依赖（反例标注，不得实现）
+  绿色点线   = 测试依赖（仅测试期，允许跨层）
+
+  <b>关键禁令</b>
+  · Controller <b>不得</b>直接依赖 Repository（含 JPA 实现）
+  · Controller <b>不得</b>跨层直连领域层
+  · 领域层 <b>不得</b>反向依赖应用 / 表现 / 基础设施层
+  · 领域层 <b>不依赖</b>任何 DTO
+
+  <b>允许</b>
+  · Infrastructure 实现领域层的 Repository 接口
+  · Test Layer 跨层测试（H2 内存库 + 种子数据）
+endlegend
+
+' ==========================================================
+' 二、主源码：com.example.library（顶层包固定 5 个）
+' ==========================================================
+package "com.example.library" as root {
+
+  ' ---------- 共享内核 ----------
+  package "common\n共享内核（无业务语义）" as common {
+    package "exception" as c_exc {
+      class LibraryException
+      class ErrorCode
+    }
+    package "result" as c_res {
+      class ApiResponse
+      class PageResponse
+    }
+    package "util" as c_util {
+      class ClockProvider
+    }
+  }
+
+  ' ---------- LAY-01 表现层 ----------
+  package "presentation\nLAY-01 表现层（MVC 之 C）" as pres {
+
+    package "reader" as p_reader {
+      class ReaderController <<Controller>>
+    }
+    package "card" as p_card {
+      class BorrowCardController <<Controller>>
+    }
+    package "catalog" as p_catalog {
+      class CatalogQueryController <<Controller>>
+      class CatalogMaintenanceController <<Controller>>
+    }
+    package "circulation" as p_circ {
+      class CirculationController <<Controller>>
+      class LoanQueryController <<Controller>>
+    }
+    package "reservation" as p_resv {
+      class ReservationController <<Controller>>
+    }
+    package "fine" as p_fine {
+      class FineController <<Controller>>
+    }
+    package "admin" as p_admin {
+      class AuthController <<Controller>>
+      class AdminAccountController <<Controller>>
+      class RuleController <<Controller>>
+      class AuditLogController <<Controller>>
+    }
+    package "advice" as p_advice {
+      class GlobalExceptionHandler <<RestControllerAdvice>>
+    }
+    package "common" as p_common {
+      class ResponseAssembler <<转换器>>
+    }
+  }
+
+  ' ---------- LAY-02 应用层 ----------
+  package "application\nLAY-02 应用层（Service Layer）" as app {
+
+    package "reader" as a_reader {
+      class ReaderApplicationService <<应用服务>>
+      package "dto" as a_reader_dto {
+      }
+      package "assembler" as a_reader_asm {
+      }
+    }
+    package "card" as a_card {
+      class BorrowCardApplicationService <<应用服务>>
+      package "dto" as a_card_dto {
+      }
+    }
+    package "catalog" as a_catalog {
+      class CatalogQueryApplicationService <<应用服务>>
+      class CatalogMaintenanceApplicationService <<应用服务>>
+      package "dto" as a_catalog_dto {
+      }
+    }
+    package "circulation" as a_circ {
+      class BorrowApplicationService <<应用服务 / 事务边界>>
+      class ReturnApplicationService <<应用服务 / 事务边界>>
+      class CompensationApplicationService <<应用服务 / 事务边界>>
+      class LoanQueryApplicationService <<应用服务 / readOnly>>
+      package "dto" as a_circ_dto {
+        class BorrowCommand
+        class ReturnCommand
+        class LoanResult
+      }
+      package "assembler" as a_circ_asm {
+        class LoanAssembler <<DTO ↔ 领域>>
+      }
+    }
+    package "reservation" as a_resv {
+      class ReservationApplicationService <<应用服务>>
+      class ReservationQueueApplicationService <<应用服务>>
+      class ReservationExpiryRunner <<Runner / UC-22>>
+      package "dto" as a_resv_dto {
+      }
+    }
+    package "fine" as a_fine {
+      class FinePaymentApplicationService <<应用服务>>
+      class FineReductionApplicationService <<应用服务>>
+      class FineQueryApplicationService <<应用服务>>
+      class FineAccrualRunner <<Runner / UC-21>>
+      package "dto" as a_fine_dto {
+      }
+    }
+    package "admin" as a_admin {
+      class AuthApplicationService <<应用服务>>
+      class SessionService <<会话 30 分钟>>
+      class AdminAccountApplicationService <<应用服务>>
+      class RuleApplicationService <<应用服务>>
+      class AuditQueryApplicationService <<应用服务>>
+      package "dto" as a_admin_dto {
+      }
+    }
+    package "support" as a_support {
+      class AccessGuard <<权限统一入口>>
+      class AuditAppender <<审计编排>>
+      class ActorContext <<操作者上下文>>
+    }
+  }
+
+  ' ---------- LAY-03 领域层 ----------
+  package "domain\nLAY-03 领域层（MVC 之 M，承载全部业务规则）" as dom {
+
+    package "shared" as d_shared {
+      class Money <<值对象>>
+      class DateRange <<值对象>>
+    }
+    package "reader" as d_reader {
+      class Reader <<实体 / 聚合根>>
+      class TeacherReader <<实体>>
+      interface ReaderRepository <<Repository 接口>>
+    }
+    package "card" as d_card {
+      class BorrowCard <<实体>>
+      class CardNumber <<值对象>>
+    }
+    package "catalog" as d_catalog {
+      class LibraryItem <<实体 / 聚合根>>
+      class Book <<实体>>
+      class Magazine <<实体>>
+      class Thesis <<实体>>
+      class ItemCopy <<实体>>
+      class CatalogService <<领域服务>>
+      interface LibraryItemRepository <<Repository 接口>>
+      interface ItemCopyRepository <<Repository 接口>>
+    }
+    package "circulation" as d_circ {
+      class Loan <<实体 / 聚合根>>
+      class BorrowPolicy <<策略 / 配置聚合根>>
+      class BorrowingService <<领域服务>>
+      class ReturningService <<领域服务>>
+      class CompensationService <<领域服务>>
+      interface LoanRepository <<Repository 接口>>
+      interface BorrowPolicyProvider <<策略供应者接口>>
+    }
+    package "reservation" as d_resv {
+      class Reservation <<实体 / 聚合根>>
+      class ReservationService <<领域服务>>
+      interface ReservationRepository <<Repository 接口>>
+    }
+    package "fine" as d_fine {
+      class FineRecord <<实体 / 聚合根>>
+      class FineRule <<策略 / 配置聚合根>>
+      class FineAccrualService <<领域服务>>
+      interface FineRecordRepository <<Repository 接口>>
+      interface FineRuleRepository <<Repository 接口>>
+      interface FineRuleProvider <<策略供应者接口>>
+    }
+    package "admin" as d_admin {
+      class AdminAccount <<实体 / 聚合根>>
+      class AuditLog <<实体 / 只追加>>
+      interface AdminAccountRepository <<Repository 接口>>
+      interface AuditLogRepository <<Repository 接口>>
+      interface AuditRecorder <<领域服务接口>>
+    }
+    package "exception" as d_exc {
+      class BorrowRejectedException <<领域异常>>
+      class ReservationRejectedException <<领域异常>>
+      class CopyStateIllegalException <<领域异常>>
+      class FineRuleMissingException <<领域异常>>
+    }
+  }
+
+  ' ---------- LAY-04 基础设施层 ----------
+  package "infrastructure\nLAY-04 基础设施 / 持久层" as infra {
+
+    package "persistence" as i_pers {
+      class JpaLoanRepository <<Repository 实现>>
+      class JpaItemCopyRepository <<Repository 实现>>
+      class LoanPO <<持久化对象>>
+      class ItemCopyPO <<持久化对象>>
+      class LoanMapper <<PO ↔ 领域>>
+      class ItemCopyMapper <<PO ↔ 领域>>
+    }
+    package "policy" as i_policy {
+      class BorrowPolicyProviderImpl <<策略供应者实现>>
+      class FineRuleProviderImpl <<策略供应者实现>>
+    }
+    package "security" as i_sec {
+      class BCryptPasswordHasher <<BCrypt>>
+      class SessionStore <<会话存储>>
+    }
+    package "scheduling" as i_sched {
+      class SchedulingConfig <<@Scheduled>>
+    }
+    package "audit" as i_audit {
+      class AuditRecorderImpl <<REQUIRES_NEW 只追加>>
+    }
+    package "config" as i_cfg {
+      class DataSourceConfig <<H2 唯一方言>>
+    }
+    package "seed" as i_seed {
+      class SeedDataInitializer <<种子数据>>
+    }
+  }
+}
+
+' ==========================================================
+' 三、LAY-05 测试层（src/test/java）
+' ==========================================================
+package "Test Layer\nsrc/test/java/com/example/library" as test {
+
+  package "domain\n领域单元测试（无 Spring / 无 DB）" as t_domain {
+    class BorrowPolicyTest
+    class FineRuleTest
+    class ItemCopyStateTest
+  }
+  package "integration\n集成测试（@SpringBootTest + H2 mem）" as t_integ {
+    class LoanRepositoryIT
+    class ReservationQueueIT
+    class FineAccrualIT
+  }
+  package "api\nAPI 接口测试（MockMvc 端到端）" as t_api {
+    class BorrowApiTest
+    class ReturnApiTest
+    class ReserveApiTest
+    class FineAccrualApiTest
+    class PermissionDeniedApiTest
+  }
+  package "resources\napplication-test.yml / seed-test.sql" as t_res {
+  }
+}
+
+' ==========================================================
+' 四、层间依赖（运行时，自上而下单向）
+' ==========================================================
+pres --> app : ① 表现层 → 应用层\nController 只调用本模块应用服务
+app  --> dom : ② 应用层 → 领域层\n用例编排 / 事务边界 / 权限入口
+infra .[#blue].> dom : ③ 基础设施层 <b>实现</b>领域层接口\n（依赖倒置，非反向依赖）
+i_pers .[#blue].> dom : Repository 实现依赖领域接口
+i_policy .[#blue].> dom : 策略供应者实现依赖领域接口
+i_audit .[#blue].> dom : 审计写入实现依赖领域接口
+
+' 共享内核：各层均可依赖（无业务语义，不破坏分层）
+pres ..> common
+app  ..> common
+dom  ..> common
+infra ..> common
+
+' ==========================================================
+' 五、纵向切片示例（circulation）：Controller → 应用服务 → 领域 → Repository 接口 ← 实现
+' ==========================================================
+p_circ --> a_circ : Controller → 应用服务（DTO 入参）
+p_circ ..> a_circ_dto : 请求 / 响应使用 DTO\n（禁止把领域对象直接对外暴露）
+a_circ_dto ..> LoanAssembler : DTO
+LoanAssembler ..> Loan : 映射为领域对象（领域层不感知 DTO）
+a_circ --> d_circ : 应用服务 → 领域服务 / 实体\n（业务规则只在领域层）
+a_support ..> d_admin : AccessGuard 委托\nAdminAccount.hasPermission()
+SchedulingConfig ..> FineAccrualRunner : 仅触发（规则不写在调度类）
+SchedulingConfig ..> ReservationExpiryRunner : 仅触发
+
+' ==========================================================
+' 六、实现关系（Infrastructure 实现 Repository / Provider 接口）
+' ==========================================================
+JpaLoanRepository ..|> LoanRepository : 实现
+JpaItemCopyRepository ..|> ItemCopyRepository : 实现
+BorrowPolicyProviderImpl ..|> BorrowPolicyProvider : 实现（读 borrowing_rule）
+FineRuleProviderImpl ..|> FineRuleProvider : 实现（读 fine_rule）
+AuditRecorderImpl ..|> AuditRecorder : 实现（独立事务只追加）
+LoanMapper ..> LoanPO : 映射
+LoanMapper ..> Loan : 映射
+
+' ==========================================================
+' 七、禁止的依赖（红色点线 —— 反例标注，不得实现）
+' ==========================================================
+CirculationController .[#red].> LoanRepository : ✗ 禁止：Controller 直接依赖 Repository
+p_circ .[#red].> i_pers : ✗ 禁止：表现层直连基础设施 / Repository 实现
+p_circ .[#red].> d_circ : ✗ 禁止：跨层直连领域层
+dom .[#red].> app : ✗ 禁止：领域层反向依赖应用层
+dom .[#red].> pres : ✗ 禁止：领域层反向依赖表现层
+infra .[#red].> pres : ✗ 禁止：基础设施层依赖表现层
+d_circ .[#red].> a_circ_dto : ✗ 禁止：领域层依赖 DTO（DTO 只在应用层）
+
+' ==========================================================
+' 八、测试依赖（绿色点线 —— 仅测试期，允许跨层）
+' ==========================================================
+t_domain .[#green].> dom : 领域单元测试
+t_integ .[#green].> i_pers : Repository 与 H2 交互
+t_integ .[#green].> app : 事务 / 定时任务集成
+t_api .[#green].> pres : 端到端 HTTP（契约见 14-api-spec.md）
+t_api .[#green].> app : 权限失败等场景
+
+' ==========================================================
+' 九、约束说明（注记）
+' ==========================================================
+note right of app
+  <b>DTO（application.&lt;module&gt;.dto）</b>
+  ① DTO 位于<b>应用层</b>，表现层依赖 DTO；
+  ② 领域层<b>不依赖</b>任何 DTO；
+  ③ DTO 内<b>禁止</b>业务判断（格式校验与映射除外）；
+  ④ 其余 6 个模块的 dto / assembler 与 circulation 同构（图略）。
+end note
+
+note right of pres
+  <b>表现层硬约束（07 §4.1）</b>
+  · 只做：路由 / 参数绑定 / 格式校验 / DTO 转换 / HTTP 状态码
+  · <b>禁止</b>任何业务规则判断与规则数值
+  · <b>禁止</b> @Transactional、<b>禁止</b>直接调用 Repository
+  · 只做「是否已登录」入口判定，角色与业务权限由应用层 AccessGuard 判定
+end note
+
+note right of dom
+  <b>领域层硬约束（07 §4.3）</b>
+  · 承载 BR-001~BR-032 全部业务规则与聚合不变式
+  · Repository / Provider 接口定义在此，实现在基础设施层
+  · <b>禁止</b> Spring / JPA / HTTP 依赖；<b>禁止</b>规则数值硬编码
+  · <b>禁止</b>按 ReaderType / ItemType 写 switch / if 费率或期限分支（BR-014）
+end note
+
+note right of infra
+  <b>基础设施层硬约束（07 §4.4）</b>
+  · Repository 实现、PO 与 Mapper、BCrypt、会话、@Scheduled、种子数据
+  · H2 <b>唯一</b>方言；禁止 MySQL / PostgreSQL 兼容层（NFR-002）
+  · 审计写入独立事务 REQUIRES_NEW，业务回滚后审计仍留存
+  · 不开业务事务；<b>禁止</b>承载业务规则
+end note
+
+note bottom of test
+  <b>Test Layer（07 §4.5）</b>
+  · 三层齐全：领域单元测试 / 集成测试 / API 接口测试
+  · 必须用 H2 内存库 jdbc:h2:mem:library + 种子数据，零污染可重复
+  · <b>禁止</b>与运行模式 jdbc:h2:file:./data/library 混用（R-8）
+  · 门禁五场景：借书 / 还书 / 预约 / 超期罚款 / 权限失败
+end note
+
+note bottom of common
+  各层均可依赖 common（共享内核，<b>无业务语义</b>）
+end note
+
+note bottom of root
+  <b>模块间依赖规则（07 §5.3）</b>
+  ① 表现层 Controller 只调用<b>本模块</b>应用服务（例外：登录鉴权走 admin）；
+  ② 应用层可跨模块调用他模块的领域服务与 Repository（向下），但<b>不得</b>重复实现他模块规则；
+  ③ 领域层跨模块协作只经 Repository / 领域服务接口，对他模块实体的状态变更<b>必须</b>走其领域方法；
+  ④ 7 个模块在各层的纵向依赖与 circulation 切片同构，箭头省略以免图面过载。
+end note
+
+@enduml
