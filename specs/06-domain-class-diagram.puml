@@ -1,0 +1,764 @@
+@startuml
+' ==========================================================
+' 06 领域类图（Domain Class Diagram）
+' 依据：specs/05-domain-model.md v1.1（§3 总览、§4 类详述、§5 值对象与枚举、§6 领域服务）
+' 上游：specs/02-requirements.md v1.1、specs/03-use-cases.md v1.0、specs/constitution.md
+' 状态：草稿，待人工审查（constitution 第四条）
+' 范围：仅表达领域层概念 —— 不含 Controller / Repository / DTO 等设计类与基础设施类
+' 说明：跨聚合一律以标识（ID）引用；Repository 接口见 05 §6，本图不绘制
+' ==========================================================
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam wrapWidth 200
+skinparam ArrowFontSize 10
+skinparam ClassFontSize 11
+
+title 图书馆管理系统 —— 领域类图（v1.0，源自 specs/05-domain-model.md v1.1）
+
+' ==========================================================
+' 一、构造型说明（图例）
+' ==========================================================
+legend right
+  <b>构造型</b>
+  <<实体/聚合根>>  Entity / Aggregate Root
+  <<实体>>         Entity（聚合内成员）
+  <<值对象>>        Value Object（不可变、属性相等性）
+  <<枚举>>          Enumeration（取值由 02 附录 A 固定）
+  <<策略/配置聚合根>> Strategy + Config Aggregate Root
+  <<领域服务>>      Domain Service
+  <<领域服务接口>>   Domain Service Interface
+
+  <b>关系</b>
+  实线三角 = 泛化（继承）
+  实心菱形 = 组合（同生同死）
+  空心菱形 = 聚合
+  实线   = 关联 / 标识引用（ID）
+  虚线   = 依赖 / 策略查找（非对象引用）
+endlegend
+
+' ==========================================================
+' 二、读者聚合：Reader 继承体系 + BorrowCard
+' ==========================================================
+package "读者聚合（Reader Aggregate）" {
+
+  abstract class Reader <<实体/聚合根>> {
+    + id : ReaderId
+    + username : String
+    - passwordHash : String
+    + name : String
+    + department : String
+    + readerType : ReaderType
+    + status : ReaderStatus
+    ..
+    + register(...) : Reader
+    + authenticate(rawPassword: String) : boolean
+    + readerType() : ReaderType  {abstract}
+    + isBorrowAllowed() : boolean
+    + hasUnpaidFine() : boolean
+    + isBlacklisted() : boolean
+    + changeReaderType(type: ReaderType) : void
+    + deactivate() : void
+  }
+
+  ' 学生读者（抽象）：仅提供学号/年级与 ReaderType 初始取值，不重写任何借阅行为
+  abstract class StudentReader <<实体>> {
+    + studentNo : String
+    + grade : String
+    ..
+    + readerType() : ReaderType
+  }
+
+  class JuniorCollegeReader <<实体>> {
+    ..
+    + readerType() : ReaderType
+  }
+
+  class UndergraduateReader <<实体>> {
+    ..
+    + readerType() : ReaderType
+  }
+
+  class MasterReader <<实体>> {
+    ..
+    + readerType() : ReaderType
+  }
+
+  class DoctoralReader <<实体>> {
+    ..
+    + readerType() : ReaderType
+  }
+
+  ' 教师读者 = 00 §5 的「教师」，教师无罚款减免（BR-008）
+  class TeacherReader <<实体>> {
+    + employeeNo : String
+    ..
+    + readerType() : ReaderType
+  }
+
+  class BorrowCard <<实体>> {
+    + id : BorrowCardId
+    + readerId : ReaderId
+    + cardNumber : CardNumber
+    + ownerName : String
+    + department : String
+    + status : CardStatus
+    ..
+    + issueFor(reader: Reader) : BorrowCard
+    + isActive() : boolean
+    + cancel() : void
+  }
+
+  Reader <|-- StudentReader
+  StudentReader <|-- JuniorCollegeReader
+  StudentReader <|-- UndergraduateReader
+  StudentReader <|-- MasterReader
+  StudentReader <|-- DoctoralReader
+  Reader <|-- TeacherReader
+
+  ' 组合：读者与借阅证同生同死，注册时同事务原子创建（BR-024）
+  Reader "1" *-- "1" BorrowCard : 组合\n原子创建(BR-024)
+}
+
+note bottom of Reader
+  <b>建模决策 D-1（05 §3.2）</b>
+  ① 子类仅表达业务分类与身份属性 + ReaderType <b>初始取值</b>，
+     不重写借书/预约行为；
+  ② 借期与上限只经可变 readerType 查 BorrowPolicy；
+  ③ 禁止以 instanceof 按子类分支（BR-014）；
+  ④ 同子类内改 readerType；跨子类重建实体并沿用 id 与 BorrowCard。
+end note
+
+note right of TeacherReader
+  ReaderType = 教师
+  BR-001：15 本 / 60 天
+  BR-008：教师<b>无</b>罚款减免
+  BR-028：管理员身份与读者身份互不影响
+end note
+
+note left of StudentReader
+  四类学生读者（05 §3.2）：
+  专科生 3/15d、本科生 5/30d、
+  研究生 7/30d、博士生 10/60d
+  数值仅供对照，运行期一律由
+  BorrowPolicyProvider 读配置取得（BR-014）
+end note
+
+' ==========================================================
+' 三、馆藏聚合：LibraryItem 继承体系 + ItemCopy
+' ==========================================================
+package "馆藏聚合（LibraryItem Aggregate）" {
+
+  abstract class LibraryItem <<实体/聚合根>> {
+    + id : LibraryItemId
+    + title : String
+    + author : String
+    + isbn : ISBN
+    + itemType : ItemType
+    + deleted : boolean
+    ..
+    + addCopy(copyNumber: CopyNumber) : ItemCopy
+    + removeCopy(copy: ItemCopy) : void
+    + hasAvailableCopy() : boolean
+    + hasActiveReservation() : boolean
+    + itemType() : ItemType  {abstract}
+    + matches(keyword: String) : boolean
+    + logicalDelete() : void
+  }
+
+  ' ItemType 由「子类 + language」推导（H-3、BR-031）
+  class Book <<实体>> {
+    + language : Language
+    + publisher : String
+    + publishYear : Integer
+    ..
+    + itemType() : ItemType
+  }
+
+  class Magazine <<实体>> {
+    + language : Language
+    + issue : String
+    + periodicalNo : String
+    ..
+    + itemType() : ItemType
+  }
+
+  class Thesis <<实体>> {
+    + department : String
+    + degreeYear : Integer
+    + supervisor : String
+    ..
+    + itemType() : ItemType
+  }
+
+  class ItemCopy <<实体>> {
+    + id : ItemCopyId
+    + itemId : LibraryItemId
+    + copyNumber : CopyNumber
+    + status : CopyStatus
+    + reservedUntil : LocalDate
+    + deleted : boolean
+    ..
+    + markOnLoan() : void
+    + holdForReservation(expireAt: LocalDate) : void
+    + release() : void
+    + markLost() : void
+    + scrap() : void
+    + isBorrowable() : boolean
+    + isReservationHolding() : boolean
+    + isReservationExpired(today: LocalDate) : boolean
+  }
+
+  LibraryItem <|-- Book
+  LibraryItem <|-- Magazine
+  LibraryItem <|-- Thesis
+
+  ' 组合：标题是多个物理副本的容器（BR-019）；副本编号全局唯一
+  LibraryItem "1" *-- "0..N" ItemCopy : 组合\n副本(BR-019)
+}
+
+note right of LibraryItem
+  <b>BR-031：借出物类型是「标题」的属性</b>，
+  不是副本的属性；ItemType 由「子类 + language」推导（H-3）。
+  itemType() 为抽象方法：
+   Book → 中文图书 / 外文图书
+   Magazine → 中文杂志 / 外文杂志
+   Thesis → 论文（恒定）
+  BR-002：借期与可借数量与借出物类型<b>无关</b>
+  同一书籍的中外文版是<b>两个</b> Book 标题，不是同一标题的两个副本（D2）
+end note
+
+note left of ItemCopy
+  五态状态机（BR-020/BR-021）：
+  在馆 / 已借出 / 预约保留 / 遗失 / 报废
+  不含「损坏」；报废为终态；遗失不可回到在馆（R-15）
+end note
+
+' ==========================================================
+' 四、借阅与预约
+' ==========================================================
+package "借阅聚合（Loan Aggregate）" {
+
+  class Loan <<实体/聚合根>> {
+    + id : LoanId
+    + readerId : ReaderId
+    + copyId : ItemCopyId
+    + borrowDate : LocalDate
+    + dueDate : LocalDate
+    + returnDate : LocalDate
+    + status : LoanStatus
+    + operatorId : AdminAccountId
+    ..
+    + create(reader, copy, policy, today) : Loan
+    + isOverdue(today: LocalDate) : boolean
+    + overdueDays(today: LocalDate) : OverdueDays
+    + return(today: LocalDate) : void
+    + isOnLoan() : boolean
+    + isReturned() : boolean
+    + belongsToSameTitleAs(other: Loan) : boolean
+  }
+
+  note bottom of Loan
+    <b>状态不变量（05 §4.10）</b>
+    在借 ⟺ returnDate == null
+    已还 ⟺ returnDate != null
+    dueDate = borrowDate + BorrowPolicy.loanPeriodDays（借书时<b>快照</b>，规则变更不追溯）
+    不可续借（BR-006）；归还不生成、不结算罚款（BR-009/R-9）
+    迁移单向：在借 → 已还
+  end note
+}
+
+package "预约聚合（Reservation Aggregate）" {
+
+  class Reservation <<实体/聚合根>> {
+    + id : ReservationId
+    + readerId : ReaderId
+    + itemId : LibraryItemId
+    + reservedAt : LocalDateTime
+    + queuePosition : int
+    + status : ReservationStatus
+    + holdUntil : LocalDate
+    ..
+    + create(reader, item, now) : Reservation
+    + enqueue(queue) : void
+    + reorder(queue, newOrder) : void
+    + isHead(queue) : boolean
+    + promote(holdUntil: LocalDate) : void
+    + expire() : void
+    + cancel() : void
+    + fulfill() : void
+  }
+
+  note bottom of Reservation
+    <b>排队机制（05 §4.11、BR-015~BR-018）</b>
+    队列 = 同标题下「在队」(等待中/保留中) 预约的有序集合
+    排序：queuePosition 升序 + reservedAt 升序
+    队尾入队 / 仅队首可取书 / 重排不增删 / 出队后位次不变
+    单人有效预约 ≤ 3；取消与过期不产生罚款
+    预约对象是<b>标题</b>而非副本
+  end note
+}
+
+' ==========================================================
+' 五、罚款与规则策略
+' ==========================================================
+package "罚款聚合（Fine Aggregate）" {
+
+  class FineRecord <<实体/聚合根>> {
+    + id : FineRecordId
+    + readerId : ReaderId
+    + type : FineType
+    + amount : Money
+    + unpaidAmount : Money
+    + status : FineStatus
+    + accrualDate : LocalDate
+    + settledAt : LocalDateTime
+    + loanId : LoanId
+    + copyId : ItemCopyId
+    ..
+    + accrueFor(loan, rule, today) : FineRecord
+    + createCompensation(copy, amount) : FineRecord
+    + pay() : void
+    + reduce(amount: Money) : void
+    + isSettled() : boolean
+    + unpaidAmount() : Money
+  }
+}
+
+package "规则策略 / 配置聚合" {
+
+  class BorrowPolicy <<策略/配置聚合根>> {
+    + id : BorrowPolicyId
+    + readerType : ReaderType
+    + maxCopies : int
+    + loanPeriodDays : int
+    ..
+    + computeDueDate(borrowDate: LocalDate) : LocalDate
+    + exceedsLimit(currentLoanedCopies: int) : boolean
+    + appliesTo(readerType: ReaderType) : boolean
+    + validate(values) : void
+  }
+
+  note right of BorrowPolicy
+    <b>建模决策 D-2（05 §4.12）</b>
+    抽象「某类读者最多借几本、能借多久」的<b>业务口径</b>，
+    不是配置表的一行；对外暴露行为而非 getter（BR-001/BR-014）。
+    唯一调用点：BorrowingService 经
+    BorrowPolicyProvider.forReaderType(...) 取得；
+    <b>快照语义</b>：dueDate 借书时算定并写入 Loan，
+    规则变更只对新的借阅生效，不追溯已借出记录。
+    修改即时生效并写审计（FR-020）。
+  end note
+
+  class FineRule <<策略/配置聚合根>> {
+    + id : FineRuleId
+    + itemType : ItemType
+    + dailyRate : Money
+    + gracePeriodDays : int
+    ..
+    + accrue(overdueDays: OverdueDays) : Money
+    + isAccruable(overdueDays: OverdueDays) : boolean
+    + appliesTo(itemType: ItemType) : boolean
+    + validate(values) : void
+  }
+
+  note right of FineRule
+    <b>建模决策 D-3（05 §4.13）</b>
+    抽象「某类借出物逾期一天罚多少」的<b>业务口径</b>（BR-007）。
+    唯一调用点：FineAccrualService 经
+    FineRuleProvider.forItemType(...) 取得并调用 accrue(...)；
+    禁止按 ItemType 写 switch/if 费率分支（BR-014）。
+    <b>实时读取语义</b>：每次计提读当前费率，
+    规则变更后下一次计提即生效，已生成的 FineRecord 不追溯重算。
+    缺费率即失败留痕，禁止按 0 或默认值静默计提（UC-21 E1）。
+    罚款<b>不区分读者类型</b>，教师无减免（BR-008）。
+  end note
+}
+
+' ==========================================================
+' 六、身份与审计
+' ==========================================================
+package "身份与审计" {
+
+  class AdminAccount <<实体/聚合根>> {
+    + id : AdminAccountId
+    + username : String
+    - passwordHash : String
+    + role : Role
+    + status : AdminStatus
+    + createdAt : LocalDateTime
+    ..
+    + create(username, rawPassword, role) : AdminAccount
+    + authenticate(rawPassword: String) : boolean
+    + hasPermission(action: Action) : boolean
+    + canBorrow() : boolean
+    + canReserve() : boolean
+    + deactivate() : void
+  }
+
+  note bottom of AdminAccount
+    BR-028：管理员<b>不可借书</b>、默认不可预约
+    （canBorrow()/canReserve() 恒 false）
+    删除为逻辑删除；禁止删除最后一个系统管理员账号
+    与 Reader <b>无继承关系</b>：同一自然人可分别持有两个身份
+  end note
+
+  class AuditLog <<实体/聚合根>> {
+    + id : AuditLogId
+    + actorId : String
+    + actorRole : Role
+    + actionType : ActionType
+    + targetType : String
+    + targetId : String
+    + result : Result
+    + occurredAt : LocalDateTime
+    ..
+    + record(entry: AuditEntry) : AuditLog
+    + queryByTarget(targetId: String) : List~AuditLog~
+  }
+
+  note right of AuditLog
+    Append-only：只提供 record()，<b>不提供</b> update/delete（BR-030）
+    弱关联（仅 actorId / targetId 引用）：
+    Reader、AdminAccount、Loan、Reservation、FineRecord、
+    LibraryItem、ItemCopy、BorrowPolicy、FineRule
+  end note
+}
+
+' ==========================================================
+' 七、领域服务（跨聚合协调 / 策略供应）
+' ==========================================================
+package "领域服务" {
+
+  class BorrowingService <<领域服务>> {
+    ..
+    + borrow(readerId, copyId, operatorId, today) : Loan
+  }
+
+  class ReturningService <<领域服务>> {
+    ..
+    + returnBook(copyId, today) : Loan
+  }
+
+  class CompensationService <<领域服务>> {
+    ..
+    + registerLost(copyId, amount, operatorId) : FineRecord
+  }
+
+  class ReservationService <<领域服务>> {
+    ..
+    + reserve(readerId, itemId, now) : Reservation
+    + cancel(reservationId) : void
+    + reorderQueue(itemId, newOrder) : void
+    + scanExpiredHolds(today) : void
+  }
+
+  class FineAccrualService <<领域服务>> {
+    ..
+    + accrueDaily(today) : void
+    + recalcBlacklist(readerId) : void
+  }
+
+  class CatalogService <<领域服务>> {
+    ..
+    + maintainItem(item) : void
+    + maintainCopy(itemId, copy) : void
+    + scrapCopy(copyId) : void
+  }
+
+  interface AuditRecorder <<领域服务接口>> {
+    ..
+    + record(entry: AuditEntry) : void
+  }
+
+  interface BorrowPolicyProvider <<领域服务接口>> {
+    ..
+    + forReaderType(readerType: ReaderType) : BorrowPolicy
+  }
+
+  interface FineRuleProvider <<领域服务接口>> {
+    ..
+    + forItemType(itemType: ItemType) : FineRule
+  }
+}
+
+' ==========================================================
+' 八、值对象
+' ==========================================================
+package "值对象（不可变）" {
+
+  class Money <<值对象>> {
+    + amount : BigDecimal
+    + currency : String
+    ..
+    + add(other: Money) : Money
+    + subtract(other: Money) : Money
+    + greaterThan(other: Money) : boolean
+  }
+
+  class DateRange <<值对象>> {
+    + from : LocalDate
+    + to : LocalDate
+  }
+
+  class CardNumber <<值对象>> {
+    + value : String
+  }
+
+  class CopyNumber <<值对象>> {
+    + value : String
+  }
+
+  class ISBN <<值对象>> {
+    + value : String
+  }
+
+  class OverdueDays <<值对象>> {
+    + days : long
+  }
+
+  class AuditEntry <<值对象>> {
+    + actorId : String
+    + actionType : ActionType
+    + targetType : String
+    + targetId : String
+    + result : Result
+    + occurredAt : LocalDateTime
+  }
+
+  class SessionToken <<值对象>> {
+    + value : String
+  }
+
+  note right of SessionToken
+    仅供应用层传递与审计留痕，
+    <b>非</b>领域状态（FR-004 会话属应用层）
+  end note
+}
+
+' ==========================================================
+' 九、枚举（取值由 02 附录 A 固定，不可扩展）
+' ==========================================================
+package "枚举" {
+
+  enum ReaderType <<枚举>> {
+    专科生
+    本科生
+    研究生
+    博士生
+    教师
+  }
+
+  enum ItemType <<枚举>> {
+    中文图书
+    外文图书
+    中文杂志
+    外文杂志
+    论文
+  }
+
+  enum Language <<枚举>> {
+    中文
+    外文
+  }
+
+  enum CopyStatus <<枚举>> {
+    在馆
+    已借出
+    预约保留
+    遗失
+    报废
+  }
+
+  enum CardStatus <<枚举>> {
+    正常
+    已注销
+  }
+
+  enum ReaderStatus <<枚举>> {
+    正常
+    已注销
+  }
+
+  enum LoanStatus <<枚举>> {
+    在借
+    已还
+  }
+
+  enum ReservationStatus <<枚举>> {
+    等待中
+    保留中
+    已完成
+    已取消
+    已失效
+  }
+
+  enum FineType <<枚举>> {
+    超期
+    赔偿
+  }
+
+  enum FineStatus <<枚举>> {
+    未缴
+    已缴
+  }
+
+  enum Role <<枚举>> {
+    读者
+    图书管理员
+    系统管理员
+  }
+
+  enum AdminStatus <<枚举>> {
+    正常
+    已停用
+  }
+
+  enum Action <<枚举>> {
+    借还
+    维护
+    减免
+    队列调整
+    账号维护
+  }
+
+  enum ActionType <<枚举>> {
+    登录失败
+    借书
+    还书
+    预约
+    取消预约
+    调整预约队列
+    登记遗失赔偿
+    缴纳罚款
+    减免罚款
+    维护标题
+    维护副本
+    报废
+    维护管理员
+    修改规则
+  }
+
+  enum Result <<枚举>> {
+    成功
+    失败
+  }
+}
+
+' AdminAccount 的权限与审计类型取值
+AdminAccount ..> Action : hasPermission 判定项
+AuditLog ..> ActionType
+AuditLog ..> Result
+AdminAccount ..> AdminStatus
+
+' ==========================================================
+' 十、聚合之间的关系（跨聚合一律以标识引用）
+' ==========================================================
+
+' ---------- Reader → Loan / Reservation / FineRecord ----------
+Reader "1" -- "0..N" Loan : 借阅人\n(readerId)
+Reader "1" -- "0..N" Reservation : 预约人\n(readerId)
+Reader "1" -- "0..N" FineRecord : 欠款人\n(readerId)
+Reader "1" -- "0..N" AdminAccount : 同一自然人另一身份\n(独立聚合，无继承)
+
+' ---------- Reader → ReaderType / BorrowCard 状态键 ----------
+Reader ..> ReaderType : 规则查找唯一键\n(可变)
+Reader ..> ReaderStatus
+BorrowCard ..> CardStatus
+BorrowCard ..> CardNumber
+
+' ---------- Reader 经 ReaderType → BorrowPolicy（策略查找，非对象引用） ----------
+Reader ..> BorrowPolicy : 按 ReaderType 查找\n(经 BorrowPolicyProvider)
+JuniorCollegeReader ..> ReaderType : 专科生
+UndergraduateReader ..> ReaderType : 本科生
+MasterReader ..> ReaderType : 研究生
+DoctoralReader ..> ReaderType : 博士生
+TeacherReader ..> ReaderType : 教师
+
+' ---------- LibraryItem → Reservation / ItemCopy / FineRule ----------
+LibraryItem "1" -- "0..N" Reservation : 被预约的标题\n(itemId)
+LibraryItem ..> ItemType : 借出物类型\n(标题属性，BR-031)
+LibraryItem ..> ISBN
+LibraryItem ..> FineRule : 按 ItemType 查找\n(经 FineRuleProvider)
+Book ..> Language
+Magazine ..> Language
+Book ..> ItemType : 中文图书/外文图书
+Magazine ..> ItemType : 中文杂志/外文杂志
+Thesis ..> ItemType : 论文
+
+' ---------- ItemCopy ----------
+ItemCopy ..> CopyStatus
+ItemCopy ..> CopyNumber
+ItemCopy "0..N" -- "1" Loan : 被借出的副本\n(copyId)
+ItemCopy "1" -- "0..N" FineRecord : 赔偿款\n(copyId)
+
+' ---------- Loan / Reservation 状态与值对象 ----------
+Loan ..> LoanStatus
+Loan ..> DateRange
+Loan ..> OverdueDays : 逾期自然日(宽限期0)
+Loan ..> BorrowPolicy : dueDate 计算\n(借书时快照)
+Loan ..> AdminAccount : 办理人\n(operatorId)
+
+Reservation ..> ReservationStatus
+LibraryItem ..> Reservation : 有效预约\n(还书后副本去向判定)
+
+' ---------- FineRecord ----------
+FineRecord ..> FineType
+FineRecord ..> FineStatus
+FineRecord ..> Money
+Loan "1" -- "0..N" FineRecord : 超期款\n(loanId)
+FineRecord ..> FineRule : 金额计算\n(accrue)
+
+' ---------- 策略：作用与被作用 ----------
+BorrowPolicy ..> ReaderType : 唯一键\n(5 行)
+FineRule ..> ItemType : 唯一键\n(5 行)
+FineRule ..> Money : dailyRate
+FineRule ..> OverdueDays : 宽限期恒为 0
+
+' ---------- 策略供应者 ----------
+BorrowPolicyProvider ..> BorrowPolicy : 按 ReaderType 返回
+FineRuleProvider ..> FineRule : 按 ItemType 返回
+
+' ---------- 领域服务 → 策略 / 实体 ----------
+BorrowingService ..> BorrowPolicyProvider : 计算 dueDate\n校验上限(BR-004)
+BorrowingService ..> Loan : 生成
+BorrowingService ..> ItemCopy : 置「已借出」
+BorrowingService ..> Reservation : 队首取书出队
+BorrowingService ..> BorrowCard : 校验「正常」\n(BR-026/UC-09)
+
+ReturningService ..> Loan : 记录归还时间
+ReturningService ..> ItemCopy : 在馆/预约保留\n(BR-017)
+ReturningService ..> Reservation : 是否存在有效预约
+ReturningService ..> ReservationStatus
+
+CompensationService ..> ItemCopy : 已借出 → 遗失\n(BR-022)
+CompensationService ..> FineRecord : 生成「赔偿」款\n(人工录入金额)
+CompensationService ..> AdminAccount : 操作者须为图书管理员
+
+ReservationService ..> Reservation : FIFO 入队\n重排/顺延/到期
+ReservationService ..> LibraryItem : 校验 BR-015\n全部副本均无「在馆」
+
+FineAccrualService ..> FineRuleProvider : 取日费率
+FineAccrualService ..> Loan : 扫描未还且超期
+FineAccrualService ..> FineRecord : 同自然日幂等计提\n(BR-010/BR-013)
+FineAccrualService ..> ItemType : 经副本→标题推导
+
+CatalogService ..> LibraryItem : 维护标题
+CatalogService ..> ItemCopy : 维护副本/报废\n(BR-023)
+CatalogService ..> AdminAccount : 须系统管理员权限
+
+' ---------- 审计 ----------
+AuditRecorder ..> AuditLog : 统一写入入口\n(只追加)
+AuditRecorder ..> AuditEntry : 组装条目内容
+BorrowingService ..> AuditRecorder
+ReturningService ..> AuditRecorder
+CompensationService ..> AuditRecorder
+ReservationService ..> AuditRecorder
+CatalogService ..> AuditRecorder
+AdminAccount ..> AuditLog : actorId 来源
+AdminAccount ..> Role : 权限矩阵依据\n(BR-028)
+Reader ..> AuditLog : actorId 来源
+
+@enduml
