@@ -1,0 +1,146 @@
+@startuml
+' 04 用例模型图（Use Case Diagram）
+' 依据：specs/03-use-cases.md v1.0（第 2 节参与者、第 3 节用例清单、第 4 节用例关系）
+' 约定：用例别名与 03 中的 UC-xx 编号一一对应
+
+left to right direction
+title 图书馆管理系统 —— 用例模型（v1.0，源自 specs/03-use-cases.md）
+
+' ==================== 参与者 ====================
+actor "访客\n（未注册读者）" as Guest
+actor "读者\nReader" as Reader
+actor "学生\nStudent" as Student
+actor "教师\nTeacher" as Teacher
+actor "图书管理员\nLibrarian" as Librarian
+actor "系统管理员\nSystemAdmin" as SystemAdmin
+actor "系统（定时调度器）" as Scheduler
+actor "审计日志\n（系统内部组件）" as AuditLog
+
+' --------- 参与者泛化 ---------
+' 依 03 §2.2：读者类型（学生 / 教师）为读者的属性特化，继承读者的全部用例关联
+Reader <|-- Student
+Reader <|-- Teacher
+
+' ==================== 用例：读者域 ====================
+usecase "注册账号\n（UC-01）" as UC01
+usecase "办理借阅证\n（UC-02，自动发证）" as UC02
+usecase "登录与登出\n（UC-03）" as UC03
+usecase "查询图书\n（UC-04）" as UC04
+usecase "查询借阅信息\n（UC-05，本人）" as UC05
+usecase "预约图书\n（UC-06）" as UC06
+usecase "取消预约\n（UC-07）" as UC07
+usecase "自助缴纳罚款\n（UC-08）" as UC08
+
+' ==================== 用例：柜台业务域 ====================
+usecase "办理借书\n（UC-09）" as UC09
+usecase "办理还书\n（UC-10）" as UC10
+usecase "查询全部借阅记录\n（UC-11）" as UC11
+usecase "登记遗失赔偿\n（UC-12）" as UC12
+
+' ==================== 用例：系统维护域 ====================
+usecase "维护图书标题信息\n（UC-13）" as UC13
+usecase "添加图书\n（UC-13a）" as UC13a
+usecase "删除图书\n（UC-13b）" as UC13b
+usecase "维护馆藏副本\n（UC-14）" as UC14
+usecase "设置副本报废\n（UC-15）" as UC15
+usecase "注销借阅证\n（UC-16）" as UC16
+usecase "维护管理员账号\n（UC-17）" as UC17
+usecase "维护规则\n（UC-18，借阅与罚款规则）" as UC18
+usecase "减免罚款\n（UC-19）" as UC19
+usecase "调整预约队列\n（UC-20）" as UC20
+
+' ==================== 用例：定时域与公共域 ====================
+usecase "每日定时计提超期罚款\n（UC-21）" as UC21
+usecase "预约保留到期扫描与顺延\n（UC-22）" as UC22
+usecase "记录审计日志\n（UC-23）" as UC23
+usecase "会话超时自动登出\n（UC-24）" as UC24
+
+' ==================== 参与者 → 用例关联 ====================
+' 访客：仅用于注册账号（注册成功即转为读者）
+Guest --> UC01
+
+' 读者（含学生 / 教师子类）
+Reader --> UC03
+Reader --> UC04
+Reader --> UC05
+Reader --> UC06
+Reader --> UC07
+Reader --> UC08
+
+' 图书管理员：作为借阅者的代理在柜台办理借还
+Librarian --> UC03
+Librarian --> UC04
+Librarian --> UC09
+Librarian --> UC10
+Librarian --> UC11
+Librarian --> UC12
+
+' 系统管理员：系统维护；不可借书（BR-028）、不可预约（H-4）
+SystemAdmin --> UC03
+SystemAdmin --> UC04
+SystemAdmin --> UC13a
+SystemAdmin --> UC13b
+SystemAdmin --> UC14
+SystemAdmin --> UC15
+SystemAdmin --> UC16
+SystemAdmin --> UC17
+SystemAdmin --> UC18
+SystemAdmin --> UC19
+SystemAdmin --> UC20
+
+' 系统（定时调度器）
+Scheduler --> UC21
+Scheduler --> UC22
+
+' 审计日志（次要参与者）
+AuditLog --> UC23
+
+' ==================== 用例关系 ====================
+' --------- «include»：依 03 §4.1 ---------
+' 注册与发证为同一原子操作，发证无独立触发路径（R-11）
+UC01 ..> UC02 : <<include>>
+' 借书 / 预约前须检索定位图书标题（与可借副本）
+UC09 ..> UC04 : <<include>>
+UC06 ..> UC04 : <<include>>
+' 会话空闲 30 分钟自动失效，扩展「登录与登出」的登出分支（UC-03 A1）
+UC24 ..> UC03 : <<extend>>
+' 写审计：登录失败、预约 / 取消预约 / 缴纳罚款
+UC03 ..> UC23 : <<include>>
+UC06 ..> UC23 : <<include>>
+UC07 ..> UC23 : <<include>>
+UC08 ..> UC23 : <<include>>
+' 写审计：借书 / 还书 / 登记遗失赔偿
+UC09 ..> UC23 : <<include>>
+UC10 ..> UC23 : <<include>>
+UC12 ..> UC23 : <<include>>
+' 写审计：UC-13 ~ UC-20 全部系统管理员维护类操作
+UC13a ..> UC23 : <<include>>
+UC13b ..> UC23 : <<include>>
+UC14 ..> UC23 : <<include>>
+UC15 ..> UC23 : <<include>>
+UC16 ..> UC23 : <<include>>
+UC17 ..> UC23 : <<include>>
+UC18 ..> UC23 : <<include>>
+UC19 ..> UC23 : <<include>>
+UC20 ..> UC23 : <<include>>
+
+' --------- 用例泛化：维护图书标题 = 添加 / 删除 ---------
+UC13 <|-- UC13a
+UC13 <|-- UC13b
+
+' ==================== 建模约束说明 ====================
+note as N1
+  <b>建模约束（源自 03 / 02）</b>
+  1. 借书 / 还书<b>必须</b>由图书管理员在柜台办理（U2）；读者无自助借还入口。
+  2. 还书路径<b>禁止</b>包含缴费步骤；罚款由 UC-21 每日定时计提（R-9、R-16）。
+  3. UC-10 与 UC-22 通过副本状态衔接，<b>非</b> «extend»（03 §4.2）。
+  4. UC-03 登录是各受保护用例的<b>前置条件</b>，不建模为 «include»。
+  5. 系统管理员不可借书（BR-028）、默认不可预约（H-4）。
+end note
+
+note right of UC02
+  办理借阅证 = 注册账号时系统自动发证，
+  无独立触发路径（R-11）。
+end note
+
+@enduml
