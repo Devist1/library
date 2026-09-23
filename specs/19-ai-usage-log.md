@@ -2,7 +2,7 @@
 
 - **输入**：`specs/01-clarifying-questions.md`（`E3` 人类回答）、`specs/00-project-brief.md` 第 7 节
 - **记录粒度**（依 `E3` 约定）：**每次使用 Agent 生成 specs / UML / 代码 / 测试，都必须在本文件登记一条记录**
-- **使用工具**：Claude Code / Codex / OpenCode
+- **使用工具**：CodeBuddy（IDE 内置 AI 编码助手）
 - **使用阶段**：需求分析 / UML建模 / 架构设计 / 详细设计 / 编码实现 / 测试生成
 
 ---
@@ -11,7 +11,7 @@
 
 ### 使用工具
 
-（待本人填写：Claude Code / Codex / OpenCode）
+CodeBuddy（IDE 内置 AI 编码助手）
 
 ### 使用阶段
 
@@ -50,7 +50,7 @@
 
 ### 使用工具
 
-（待本人填写：Claude Code / Codex / OpenCode）
+CodeBuddy（IDE 内置 AI 编码助手）
 
 ### 使用阶段
 
@@ -107,7 +107,7 @@
 
 ### 使用工具
 
-（待本人填写：Claude Code / Codex / OpenCode）
+CodeBuddy（IDE 内置 AI 编码助手）
 
 ### 使用阶段
 
@@ -156,3 +156,603 @@
 `f54d7a5` answer clarifying questions（仅提交 `01-clarifying-questions.md`）
 
 > 说明：同批次的 `specs/00-project-brief.md`（§4 / §6 回改）与 `specs/19-ai-usage-log.md`（本文件）在本条登记时**仍未提交**。
+
+---
+
+## 第 4 次使用
+
+### 使用工具
+
+CodeBuddy（IDE 内置 AI 编码助手）
+
+### 使用阶段
+
+需求分析
+
+### 输入 Prompt 摘要
+
+（1）以 `00-project-brief.md` 与 `01-clarifying-questions.md`（含「复审（Review）」小节的 `R-1`~`R-19` 确认结论）为唯一输入，成文 `specs/02-requirements.md`：定义参与者与权限矩阵、给出每条功能需求的**可测验收标准**、非功能需求、业务规则（含副本状态迁移表）与待确认问题清单，且每条待确认项须附「建议默认」以便下游推进；
+（2）按需求方给定的「功能需求清单 16 项」逐条核对覆盖性，缺失项补入，并给出可追溯的对照表。
+
+> 备注：本条目跨越「v1.0 首版成文 → 需求清单 16 项覆盖性核对 → v1.1 修订落盘」多轮交互，但因**始终作用于同一交付物**（`specs/02-requirements.md`），参照第 3 次的登记惯例合并为一条记录。
+
+### Agent 修改文件
+
+- `specs/02-requirements.md`（新建并提交，843 行；含 v1.0 首版与 v1.1 修订）
+
+### 输出摘要
+
+1. **v1.0 首版（2026-09-22）**：8 个主体章节 + 2 个附录 —— 项目目标与范围边界（含「不做」清单）、参与者与权限矩阵、`FR-001`~`FR-022` 共 22 条功能需求（每条附可测验收标准）、`NFR-001`~`NFR-009` 非功能需求、`BR-001`~`BR-032` 业务规则（7 组，含 BR-021 副本五态迁移表）、`TBD-001`~`TBD-012` 待确认问题（每条附建议默认与影响范围）。
+2. **v1.1 覆盖性修订（2026-09-23）**：
+   - 逐条核对需求清单 16 项 → **已覆盖 15 项，缺失 1 项「查询图书」**；
+   - 补入 **`FR-023` 查询图书（书目检索）**（P0；读者 / 图书管理员 / 系统管理员可用；按书名 / 作者 / ISBN 精确或前缀匹配、可按副本状态过滤、分页；**不含**复杂全文检索），`TBD-001` 随之确认关闭；
+   - `FR-001` 改名「注册读者账号并办理借阅证（自动发证）」并补验收标准第 7、8 条，显式覆盖清单中的「注册读者账号」与「办理借阅证」两项（依 `R-11`：办证 = 注册时自动发证，无独立审核用例）；
+   - `FR-006` / `FR-007` / `FR-022` 补「添加 / 删除」分项验收标准（标题、副本、管理员）；
+   - 新增**附录 C 需求清单覆盖对照（16/16）**与**附录 D 修订记录**；
+   - 编号**不重排**（本文件 `FR-xxx` 已被下游引用），改用附录 C 建立与需求清单编号的映射。
+
+### 人工审查结果
+
+（待本人填写：审查结论与修改意见）
+
+审查时**至少**需裁决以下 4 点：
+
+1. 「办理借阅证」与「注册读者账号」合并为 `FR-001` 是否与需求方对「独立用例」的预期一致（依据 `R-11`：注册即自动发证，无审核环节）；
+2. `FR-023` 的范围（书名 / 作者 / ISBN 精确或前缀匹配 + 副本状态过滤 + 分页）是否满足需求方对「查询图书」的预期；
+3. `TBD-001` 由「待确认」转为「已确认关闭」是否成立 —— 关闭依据为需求方清单明确列入「查询图书」；
+4. 采用**映射表**而非对 `FR-xxx` 重编号是否可接受。
+
+### 测试结果
+
+不适用（本阶段仅产出规格文档，尚无代码与自动化测试）。`02` 中的验收标准即可测断言，将作为 `15-test-plan.md` 的输入。
+
+### Git 提交
+
+`b628c87` generate requirements spec（仅提交 `specs/02-requirements.md`）
+
+> 说明：同批次的 `specs/00-project-brief.md`（§4 / §6 回改）与 `specs/19-ai-usage-log.md`（本文件）在本条登记时**仍未提交**。
+
+---
+
+## 第 5 次使用
+
+### 使用工具
+
+CodeBuddy（IDE 内置 AI 编码助手）
+
+### 使用阶段
+
+需求分析（用例建模）
+
+### 输入 Prompt 摘要
+
+以 `specs/02-requirements.md`（v1.1）为唯一输入，生成 `specs/03-use-cases.md`：（1）识别全部参与者；（2）识别全部核心用例；（3）每个用例给出编号、名称、主要参与者、次要参与者、前置条件、后置条件、基本事件流、备选事件流、异常事件流、关联需求编号；（4）重点详述**办理借书、办理还书、预约图书、办理借阅证、计算超期罚款**五个用例。要求只修改 `03-use-cases.md`。
+
+### Agent 修改文件
+
+- `specs/03-use-cases.md`（新建，1215 行）
+
+### 输出摘要
+
+1. **参与者**：5 个主要参与者 —— 读者、访客（未注册读者，仅用于注册）、图书管理员、系统管理员、系统（定时调度器）；2 个次要参与者 —— 读者（被代理人）、审计日志（系统内部组件）。说明：读者类型是**属性**而非独立参与者；图书管理员为柜台代理；系统管理员不可借书。
+2. **用例清单**：24 个（`UC-01`~`UC-24`），按读者域 / 柜台业务域 / 系统维护域 / 系统定时与公共域分组；核心链路（P0）12 个，路径为 `UC-01 → UC-04 → UC-09 → UC-10 → UC-21`。
+3. **用例关系**：`«include»` 表（`UC-01` 包含 `UC-02` 办理借阅证；各写操作包含 `UC-23` 记录审计日志）；明确 `UC-10` 与 `UC-22`、`UC-10` 与 `UC-08` / `UC-19` **不建模为** `«extend»`。
+4. **重点详述 5 个用例**：`UC-02`（自动发证，含原子事务与「无待审核状态」违约判定）、`UC-09`（四项前置校验 + 副本可借判定 + 应还日期按读者类型 + 并发与事务）、`UC-10`（副本去向 `预约保留` + 3 天 / `在馆`，明确不做一次性结算与缴费步骤）、`UC-06`（无 `在馆` 副本才可预约 + 同标题 / 重复 / 上限 3 + FIFO）、`UC-21`（逾期自然日 × `fine_rule` 日费率、幂等、50 元封顶与黑名单、赔偿不计入）。
+5. **覆盖与自检**：`FR-001`~`FR-023` → 23/23 全覆盖对照表；术语与枚举一致性自检；「不做」清单核对（无续借 / 挂失 / 损坏 / 催还 / 报表 / 真实支付等）。
+6. **假设登记**：`H-1`~`H-5`（计提不逐笔审计、删除为逻辑删除、赔偿款未缴禁止借阅、系统管理员不可预约、取书由图书管理员办理），均标注为未经确认的假设。
+
+### 人工审查结果
+
+（待本人填写：审查结论与修改意见）
+
+审查时**至少**需裁决以下 5 点：
+
+1. `UC-02` 以 `«include»` 子用例形式存在，是否符合需求方「办理借阅证」需详细描述的要求（与 `R-11`「不新增独立办证用例」的取舍）；
+2. `UC-21` 不逐笔写审计日志（`H-1`）是否可接受（`FR-005` 未列举计提操作）；
+3. `H-3`~`H-5` 三项默认口径（赔偿款未缴禁止借阅 / 系统管理员不可预约 / 取书由图书管理员办理）是否确认；
+4. `UC-09` 的「未取预约仅提示不阻断」与 `UC-10` 的「归还不因未缴罚款阻断」是否符合柜台实际业务；
+5. `04-use-case-model.puml` 须按 `03` 第 3、4 节同步重绘（依第十一条第 4 款，同一轮变更内保持一致）。
+
+### 测试结果
+
+不适用（本阶段仅产出规格文档，尚无代码与自动化测试）；`03` 中的事件流将作为 `10/11/12-sequence-*.puml` 与 `15-test-plan.md` 的输入。
+
+### Git 提交
+
+`455b497` 03用例文本（仅提交 `specs/03-use-cases.md`，1215 行）
+
+---
+
+## 第 6 次使用
+
+### 使用工具
+
+CodeBuddy（IDE 内置 AI 编码助手）
+
+### 使用阶段
+
+UML 建模（用例图）
+
+### 输入 Prompt 摘要
+
+根据 `specs/03-use-cases.md` 生成 PlantUML 用例图并写入 `specs/04-use-case-model.puml`，要求：① 使用 `@startuml` / `@enduml`；② 参与者至少包括 `Reader`、`Student`、`Teacher`、`Librarian`、`SystemAdmin`；③ `Student` 与 `Teacher` 泛化自 `Reader`；④ 用例至少包括注册账号、查询图书、预约图书、查询借阅信息、办理借书、办理还书、办理借阅证、添加图书、删除图书、维护规则；⑤ 准确表达 `include` / `extend` / 泛化关系；⑥ 不修改其他文件。用户同时给定了一份 PlantUML 示例风格（`left to right direction`、用例用 `as` 别名、`<<include>>` 用 `..>` 表达）。
+
+### Agent 修改文件
+
+- `specs/04-use-case-model.puml`（原为**空文件**，本次填充为 128 行）
+
+### 输出摘要
+
+1. **参与者 8 个**：`访客`、`Reader`、`Student`、`Teacher`、`Librarian`、`SystemAdmin`，以及 `系统（定时调度器）` 与次要参与者 `审计日志`（依 `03` §2）。
+2. **用例 24 个**，别名与 `UC-01`~`UC-24` 一一对应，覆盖用户列举的全部 10 项；其中 `办理借阅证` 依 `R-11` 建模为 `注册账号` 的 `«include»` 子用例（无独立触发路径）。
+3. **关系表达**：
+   - 参与者泛化 2 条：`Reader <|-- Student`、`Reader <|-- Teacher`；
+   - `«include»` 20 条：`UC-01 → UC-02`（原子发证）、`UC-09 / UC-06 → UC-04`（检索定位）、全部写操作 → `UC-23 记录审计日志`（与 `03` §4.1 表格逐条对应）；
+   - `«extend»` 1 条：`UC-24 会话超时自动登出 → UC-03`（对应 `UC-03 A1`）；
+   - 用例泛化 1 组：`维护图书标题信息(UC-13) ← 添加图书 / 删除图书`。
+4. **显式排除的关系**（避免误读为 `«extend»`）：`UC-10` 与 `UC-22`、`UC-10` 与 `UC-08` / `UC-19`、`UC-03` 与各鉴权用例 —— 依 `03` §4.2 以 note 形式写在图内。
+5. **图内 note 2 处**：`办理借阅证` 附「注册时自动发证」说明；另附建模约束 5 条（借还须图书管理员柜台办理、还书路径禁缴费、罚款由定时计提、登录是前置条件非 `«include»`、系统管理员不可借书 / 默认不可预约）。
+
+### 人工审查结果
+
+（待本人填写：审查结论与修改意见）
+
+审查时**至少**需裁决以下 4 点：
+
+1. `Student` / `Teacher` 泛化自 `Reader` 与 `03` §2.2「读者类型是**属性**而非独立参与者」的关系 —— 图示**同时**保留两者，是否会造成「读者类型 = 独立角色」的误解；
+2. `「添加图书」/「删除图书」`建模为 `UC-13` 的**子用例（泛化）**是否与 `03` §3.3「同一用例内包含添加 / 删除」的口径一致；
+3. `«extend»` 仅建模 `UC-24 → UC-03` 一处，是否足以满足 UML 作业对 `extend` 的考察要求；
+4. `办理借阅证` 在图中**只**作为被包含用例出现，是否需为需求方单列可见入口。
+
+### 测试结果
+
+不适用（本阶段无代码）。语法**未做实机渲染校验** —— 本机 `plantuml` 可执行程序不存在（仅有 JRE 26），属**遗留事项**（第三条第 5 款、附则 A #1 要求图可通过 PlantUML 解析）。
+
+### Git 提交
+
+`2400f0b` 04生成用例图（已由人类提交；本条登记时 `04-use-case-model.puml` 已入版本库）
+
+---
+
+## 第 7 次使用
+
+### 使用工具
+
+CodeBuddy（IDE 内置 AI 编码助手）
+
+### 使用阶段
+
+需求分析（领域建模）
+
+### 输入 Prompt 摘要
+
+根据 `specs/02-requirements.md` 与 `specs/03-use-cases.md` 生成 `specs/05-domain-model.md`，要求：① 识别核心领域类；② 每个领域类给出类名、职责、关键属性、关键方法或行为、约束、与其他类的关系；③ 必须体现继承 / 分类关系 —— `Reader` / `StudentReader` / `TeacherReader` 与 `LibraryItem` / `Book` / `Magazine` / `Thesis`；④ 必须包含 `BorrowCard`、`Loan`、`Reservation`、`BorrowPolicy`、`FineRule`、`FineRecord`；⑤ 说明哪些是实体、哪些是值对象、哪些是服务或策略；⑥ 只修改 `05-domain-model.md`。
+
+### Agent 修改文件
+
+- `specs/05-domain-model.md`（原为**空文件**，本次成文 v1.0）
+
+### 输出摘要
+
+1. **类清单**：实体 12 个（含 `Reader`、`LibraryItem` 两个抽象基类与 7 个具体子类）、领域服务 6 个（`BorrowingService` / `ReturningService` / `CompensationService` / `ReservationService` / `FineAccrualService` / `CatalogService`）、领域服务接口 3 个（`AuditRecorder` / `BorrowPolicyProvider` / `FineRuleProvider`）、值对象与枚举 15 个。
+2. **继承体系**：`Reader → StudentReader → {JuniorCollege, Undergraduate, Master, Doctoral}` 与 `Reader → TeacherReader`；`LibraryItem → {Book, Magazine, Thesis}`，`ItemType` 由「子类 + `language`」推导，挂在**标题**而非副本（`BR-031`）。
+3. **策略抽象**：`BorrowPolicy`（读者类型 × 可借数量 × 借期）与 `FineRule`（借出物类型 × 日费率）建模为「**策略 + 配置型聚合根**」，经 Provider 读配置表，禁硬编码（`BR-014`、第七条第 3 款）。
+4. **聚合边界**：7 个聚合及其不变式；跨聚合一律以 ID 引用。
+5. **状态迁移表**：按 `E2` / `R-19` 以文字表替代状态图，给出 `ItemCopy` 全量 BR-021 迁移 + `Loan` / `Reservation` / `BorrowCard` / `FineRecord` 迁移。
+6. **对照与假设**：BR / FR ↔ 领域类对照表；假设 `H-1`~`H-4`（黑名单为派生状态、学生子类建模、`ItemType` 推导、`BorrowCard` 随 `Reader` 聚合持久化）及引用的 `TBD-002` / `003` / `006` / `007` / `010` / `012`。
+
+### 人工审查结果
+
+（待本人填写：审查结论与修改意见）
+
+人类已提出 **7 项审查问题**（领域类是否来自业务而非表翻译、是否体现读者类型 / 借出物类型、规则是否抽象为 `BorrowPolicy` / `FineRule`、`Loan` 是否表达借还与归还状态、`Reservation` 是否支持排队），逐项处理见**第 8 次使用**。
+
+### 测试结果
+
+不适用（本阶段仅产出规格文档，尚无代码与自动化测试）；本文件将作为 `06-domain-class-diagram.puml`、`09-design-model.md`、`13-database-design.md` 的输入。
+
+### Git 提交
+
+`ffe5af1` 05领域模型（已由人类提交）
+
+---
+
+## 第 8 次使用
+
+### 使用工具
+
+CodeBuddy（IDE 内置 AI 编码助手）
+
+### 使用阶段
+
+需求分析（按人工审查意见修订领域模型）
+
+### 输入 Prompt 摘要
+
+针对第 7 次产出的人工审查意见，逐项自查并补正 `specs/05-domain-model.md`：（1）领域类是否来自业务而不是数据库表的机械翻译；（2）是否体现不同读者类型；（3）是否体现不同借出物类型；（4）借阅规则是否抽象为 `BorrowPolicy`；（5）罚款规则是否抽象为 `FineRule`；（6）`Loan` 是否能表达借出和归还状态；（7）`Reservation` 是否支持排队。要求仍**只修改** `05-domain-model.md`。
+
+### Agent 修改文件
+
+- `specs/05-domain-model.md`（v1.0 → **v1.1**，657 行）
+
+### 输出摘要
+
+1. **新增 §3.4「领域类的业务来源（反『数据库表机械翻译』自检）」**：给出准入判据（来自术语 / 承载不变式 / 封装可变更策略）、逐类业务来源表，并列出**被排除**的表式概念（字典码表 → 枚举值对象、外键关联表 → 跨聚合标识引用、技术列 → 不建模、查询视图 → 读模型 DTO、会话表 → 应用层）；唯一保留的 `deleted` 标记已论证为 `NFR-008` / `TBD-012` 的**业务语义**「逻辑删除」。
+2. **§3.2 补两张对照表 + 建模决策 D-1**：`ReaderType` ↔ 类 ↔ `BorrowPolicy`（5 类 → 5 个类 → 数量 / 期限）与 `ItemType` ↔ 类 ↔ `FineRule`（5 类 → 3 个子类 → 日费率）；**D-1** 处理「类型可变更（`TBD-002`）与固定子类」的冲突：`readerType` 可变且为唯一规则键，子类表达业务分类与初始取值，禁止 `instanceof` 分支。
+3. **§4.12 / §4.13 补 D-2 / D-3**：阐明两个策略对象抽象的是业务口径而非配置表行、调用点唯一（经 Provider）；**生效语义差异** —— `BorrowPolicy` 为**快照**（`dueDate` 借书时固定，规则变更不追溯已借出记录），`FineRule` 为**实时读取**（每次计提读当前费率，下一次计提即生效）。
+4. **§4.10 补 `Loan` 状态表达**：`LoanStatus`（`在借 / 已还`）与 `returnDate` 互为充要条件、4 条状态不变量、单向迁移（不可回退、不可续借）、计提不改变 `Loan` 状态。
+5. **§4.11 补 `Reservation` 排队机制 6 条**：队列 = 同标题下**在队**（`等待中` / `保留中`）预约的有序集合（`queuePosition` 升序 + `reservedAt` 升序）、队尾入队、队首判定、队列调整仅重排不增删、出队后位次不变、唯一约束防重复 + 单人上限 3；明确**不**另建无行为的 `ReservationQueue` 实体。
+6. **新增附录 A「评审项自检对照（7 项）」**：逐项给出结论、证据位置与遗留风险 3 条（D-1 跨子类修正的实现成本、队列重排与顺延的并发锁、对照表数值仅为种子默认值）。
+
+### 人工审查结果
+
+（待本人填写：审查结论与修改意见）
+
+审查时**至少**需裁决以下 3 点（与本文件附录 A「遗留风险」一致）：
+
+1. **D-1 的跨子类修正**：「重建 `Reader` 实体」方案可接受，还是退化为 `Reader` + 可变 `ReaderType` 属性并取消子类（`H-2`）；
+2. **队列并发**：`UC-20` 队列调整与 `UC-22` 到期顺延并发时的加锁策略（行级锁 / 乐观锁，`NFR-009`）；
+3. §3.2 两张对照表中的数值为**种子默认值**，规则变更后须以配置表为准（`BR-014`）—— 是否需在 `06-domain-class-diagram.puml` 中同步标注「数值不入模型」。
+
+### 测试结果
+
+不适用（本阶段仅产出规格文档，尚无代码与自动化测试）。
+
+### Git 提交
+
+与第 7 次**同批**提交：`ffe5af1` 05领域模型（该提交已含 v1.1 修订内容）。若需逐次留痕，须由人类将该提交拆分为「v1.0 成文」与「v1.1 审查补正」两条 —— 见「遗留事项」。
+
+---
+
+## 第 9 次使用
+
+### 使用工具
+
+CodeBuddy（IDE 内置 AI 编码助手）
+
+### 使用阶段
+
+UML 建模（领域类图）
+
+### 输入 Prompt 摘要
+
+根据 `specs/05-domain-model.md` 生成 PlantUML 领域类图并写入 `specs/06-domain-class-diagram.puml`，要求：① 使用 `@startuml` 与 `@enduml`；② 表达类、属性、核心方法；③ 表达继承、关联、聚合或组合；④ `Reader` 与 `StudentReader`、`TeacherReader` 的关系要清晰；⑤ `LibraryItem` 与 `Book`、`Magazine`、`Thesis` 的关系要清晰；⑥ `Reader` 与 `BorrowCard`、`Loan`、`Reservation` 的关系要清晰；⑦ `BorrowPolicy` 和 `FineRule` 的作用要清晰；⑧ **不**加入 Controller、Repository、DTO 等设计类。
+
+### Agent 修改文件
+
+- `specs/06-domain-class-diagram.puml`（填充为 662 行；本条登记时该文件在工作区与 HEAD 提交 `e6f00e7`「06领域类图」内容一致，`git status` 仅显示 `specs/19-ai-usage-log.md` 已修改）
+
+### 输出摘要
+
+1. **包划分 9 个**：读者聚合、馆藏聚合、借阅聚合、预约聚合、罚款聚合、规则策略/配置聚合、身份与审计、领域服务、值对象、枚举（含图例说明构造型与关系线型含义）。
+2. **泛化（继承）**：`Reader`（abstract）← `StudentReader`（abstract）← `JuniorCollegeReader` / `UndergraduateReader` / `MasterReader` / `DoctoralReader`；`Reader` ← `TeacherReader`；`LibraryItem`（abstract）← `Book` / `Magazine` / `Thesis`。
+3. **组合 / 聚合 / 关联**：`Reader "1" *-- "1" BorrowCard`（原子创建，`BR-024`）；`LibraryItem "1" *-- "0..N" ItemCopy`（`BR-019`）；`Reader 1—0..N Loan / Reservation / FineRecord`（均标注 `readerId` 标识引用）；`Loan N—1 ItemCopy`、`ItemCopy 1—0..N FineRecord`（赔偿）、`Loan 1—0..N FineRecord`（超期）、`LibraryItem 1—0..N Reservation`（预约针对**标题**）。
+4. **策略作用以虚线依赖表达**：`Reader --(ReaderType)--> BorrowPolicy`、`LibraryItem --(ItemType)--> FineRule`，均经 `BorrowPolicyProvider` / `FineRuleProvider` 查找（非对象引用）；`BorrowingService` / `FineAccrualService` 分别为两个策略的**唯一调用点**。
+5. **策略语义以 note 固化**：`BorrowPolicy` = `computeDueDate()` / `exceedsLimit()`，`dueDate` 借书时**快照**、规则变更不追溯（`D-2`）；`FineRule` = `accrue(overdueDays)`，**实时读取**、下一次计提即生效、缺费率即失败（`D-3`、`UC-21 E1`），且罚款不区分读者类型（`BR-008`）。
+6. **核心方法补齐**：`Loan`（`isOverdue` / `overdueDays` / `return` 等）附「状态不变量」note（`在借 ⟺ returnDate == null`、不可续借、归还不结算罚款）；`Reservation`（`enqueue` / `reorder` / `isHead` / `expire` / `fulfill`）附 FIFO 排队机制 6 条 note；`ItemCopy` 五态迁移方法附状态机 note；`Reader` 附建模决策 **D-1** note（子类仅给 `ReaderType` 初始取值、禁止 `instanceof` 分支）。
+7. **值对象与枚举**：值对象 8 个（`Money` / `DateRange` / `CardNumber` / `CopyNumber` / `ISBN` / `OverdueDays` / `AuditEntry` / `SessionToken`）；枚举 15 个（`ReaderType` / `ItemType` / `Language` / `CopyStatus` / `CardStatus` / `ReaderStatus` / `LoanStatus` / `ReservationStatus` / `FineType` / `FineStatus` / `Role` / `AdminStatus` / `Action` / `ActionType` / `Result`）。
+8. **显式排除**：无 Controller、无 Repository 接口、无 DTO / 读模型；文件头注释说明「`05` §6 的 Repository 接口与依赖不予绘制，跨聚合一律以标识引用」。
+
+### 人工审查结果
+
+（待本人填写：审查结论与修改意见）
+
+审查时**至少**需裁决以下 5 点：
+
+1. 类图**同时**画出「`Reader` 子类继承树」与「可变 `readerType` 属性」两套类型表达，是否会与 `D-1` / `H-2`（可退化为取消子类）产生理解冲突；
+2. 图中由 Agent 补齐的 `Language` / `AdminStatus` / `Action` / `ActionType` / `Result` **五个枚举未在 `05` §5 枚举表中列出**，是否保留（或补登记进 `05`）；
+3. 是否保留**领域服务与 Provider 接口**（`BorrowingService` 等 6 个服务 + `AuditRecorder` / `BorrowPolicyProvider` / `FineRuleProvider` 3 个接口）—— 若作业只要求「领域实体类图」，可整包移除以缩小图幅；
+4. 图幅规模（约 60 个类 / 枚举 + 9 个包 + 20 余条 note）是否需按主题拆分为多张图；
+5. 类图与 `05` v1.1 §4 的属性 / 方法是否逐类一致（本轮按 §4 摘录，未逐字穷举全部约束）。
+
+### 测试结果
+
+**已做实机渲染校验**（区别于第 6 次）：临时获取 `plantuml-1.2024.7.jar`，以 `java -jar plantuml.jar -charset UTF-8 -failfast2 -tsvg` 渲染**通过**，成功生成 SVG（约 410 KB），无语法错误；渲染产物已在校验后删除，工作区不留中间文件。仍无代码，故无单元 / 集成测试。
+
+### Git 提交
+
+（待本人填写）
+
+> 说明：本轮 `06-domain-class-diagram.puml` 的内容与 HEAD 提交 `e6f00e7`「06领域类图」一致，`git status` 未将其列为改动；本文件（第 4~9 次条目）仍未提交。
+
+---
+
+## 第 10 次使用
+
+### 使用工具
+
+CodeBuddy（IDE 内置 AI 编码助手）
+
+### 使用阶段
+
+架构设计（四层分层架构 + MVC）
+
+### 输入 Prompt 摘要
+
+根据 `specs/02-requirements.md`、`specs/05-domain-model.md` 和 `specs/constitution.md` 生成 `specs/07-architecture.md`，要求：① 采用分层架构与 MVC 模式；② 至少包含表现层（Controller）/ 应用层（Service）/ 领域层 / 基础设施（持久）层 / 测试层，并说明每层职责；③ 说明七个主要模块 —— `reader` / `card` / `catalog` / `circulation` / `reservation` / `fine` / `admin`；④ 说明权限控制策略、异常处理策略、事务边界、业务规则放在哪些类中、可使用哪些设计模式（建议体现 Strategy / Factory / Repository / Service Layer / DTO / MVC）；⑤ **只修改** `07-architecture.md`。
+
+### Agent 修改文件
+
+- `specs/07-architecture.md`（原为**空文件**，本次成文 **v1.0**，486 行）
+
+### 输出摘要
+
+1. **架构总览（§3）**：四层 + MVC 分层图（View = Vue 3 SPA / Controller = `presentation` / Model = `domain`）；**6 条依赖规则**（`presentation → application → domain ← infrastructure`，禁反向依赖与跨层直连；DTO 归属应用层；领域层禁 Spring / JPA / HTTP）；MVC 落点对照表。
+2. **五层职责（§4，`LAY-01`~`LAY-05`）**：表现层（路由 / 参数绑定 / 格式校验 / DTO 转换 / HTTP 状态码，禁业务规则、禁事务）、应用层（用例编排 / **事务边界** / **权限校验统一入口** / 审计编排 / DTO 映射 / 定时任务触发入口）、领域层（承载 `BR-001`~`BR-032` 全部规则，禁 `switch` 费率分支与 `instanceof` 子类分支）、基础设施层（Repository 实现 / PO 与 Mapper / BCrypt / 会话 / `@Scheduled` / 种子数据）、**测试层**（领域单元 / 集成 / API 三层，H2 内存库 + 种子数据，门禁五场景）。
+3. **包结构与目录（§5）**：顶层包**固定 5 个** —— `common` / `presentation` / `application` / `domain` / `infrastructure`；二级包 = 7 个业务模块 + 横切子包；给出完整源码树（含 `src/test/java` 与前端 `web/`）与**模块间依赖规则 4 条**。
+4. **七个业务模块（§6，`MOD-01`~`MOD-07`）**：逐模块给出职责、领域核心类、主要应用服务、表现层、对应用例与「禁止」清单；明确 `BorrowPolicy` 归 `circulation`、`FineRule` 归 `fine`、规则**维护权限**归 `admin`（避免规则口径出现第二处真相）。
+5. **权限控制策略（§7，`SEC-01`~`SEC-08`）**：BCrypt + 本地口令；会话 30 分钟滑动超时；`AccessGuard.require(actor, action)` 为**唯一鉴权入口**且置于应用服务首行（显式调用，非仅 AOP）；角色判定委托领域层 `AdminAccount.hasPermission()`；权限矩阵 14 行逐条落地；**数据级权限**（`readerId` 一律取自会话）；越权 → 403 + 审计；审计只追加且用 `REQUIRES_NEW` 独立事务。
+6. **异常处理策略（§8，`EXC-01`~`EXC-08`）**：异常层次树（领域异常 / 401 / 403 / 400 / 404 / 409 / 500）、定义与抛出位置表、`GlobalExceptionHandler` 统一转译、异常与事务回滚（失败审计后原样重抛）、定时任务异常（单条失败继续，缺费率视为任务失败）。
+7. **事务边界（§9，`TX-01`~`TX-08`）**：事务边界 = 应用层公开用例方法；**9 个必须原子化的用例**（注册发证、借书、还书、遗失赔偿、预约入队、队列调整、缴纳 / 减免、馆藏维护、规则维护）；定时任务**分批事务** + 幂等；审计独立事务；并发控制手段表（条件更新 + `@Version` + 唯一约束）。
+8. **业务规则归属（§10，`RULE-01`~`RULE-13`）**：`BR` → 承载类对照表（承接 `05` §7），并给出**明确「不归属」清单**（Controller / DTO、应用服务分支、SQL、常量类、前端、领域层 `switch` 分支）。
+9. **设计模式（§11，`DP-01`~`DP-10`）**：MVC、分层 + 依赖倒置、Repository（接口在领域层）、Service Layer、**Strategy ×2**（`BorrowPolicy` 读者类型 / `FineRule` 借出物类型，含「快照 vs 实时读取」两种生效语义与「调用点唯一」硬约束）、**Factory**（`ReaderFactory` / `LibraryItemFactory` / `BorrowCardFactory` + 静态工厂）、DTO + Assembler、值对象与聚合、定时任务 Runner；另列**明确不采用**清单（完整 State 模式、CQRS / 事件溯源、Specification、Facade）。
+10. **运行部署视图（§12）** + **`constitution.md` 一致性自检 9 项（§13）** + 假设与待确认 `ASM-01`~`ASM-08`（§14）+ 附录 A 修订记录。
+
+### 人工审查结果
+
+（待本人填写：审查结论与修改意见）
+
+审查时**至少**需裁决以下 7 点：
+
+1. **顶层包固定 5 个（含 `common` 共享内核）**是否被接受；根包名 `com.example.library` 是否需改为课程要求的包名（`07` `ASM-01` / `ASM-02`）；
+2. **DTO 置于应用层**（`application.<module>.dto`）以保证依赖方向自上而下，是否接受；若要求 DTO 独立为契约包，须走第五条变更流程（`ASM-03`）；
+3. 权限校验采用**应用服务内显式调用 `AccessGuard`**（而非仅 AOP 注解）是否接受；
+4. 审计写入采用 **`REQUIRES_NEW` 独立事务**（业务回滚后审计仍留存）是否接受；
+5. **七个模块的规则归属** —— `BorrowPolicy` 归 `circulation`、`FineRule` 归 `fine`、规则维护入口归 `admin`，是否合理；
+6. 是否引入 **`ArchUnit`** 做编译期分层依赖校验（**第三方依赖，须取得人类同意**；当前**未引入**，`ASM-05`）；PO ↔ 领域映射是否改用 MapStruct（当前默认手写，`ASM-04`）；
+7. `07` §5.2 目录树与 `08-package-diagram.puml`、`06-domain-class-diagram.puml`、`13-database-design.md` 的**逐项一致性**复核。
+
+> 说明：本轮人类指令限定「只修改 `07-architecture.md`」，致本文件未能同步登记 —— 该冲突已登记为 `07` §14 `ASM-07`；**本次补登后冲突解除**。
+
+### 测试结果
+
+不适用（本阶段仅产出规格文档，尚无代码与自动化测试）。已按 `constitution.md` 附则 A 做**文档级自检 9 项**（`07` §13），覆盖分层依赖、MVC 落点、Repository 归属、包结构、Controller 无业务规则、权限矩阵、三层测试、不做清单、术语一致性。
+
+### Git 提交
+
+`9dbdc5b` 07架构设计（**已由人类提交**；本条登记时 `git status` 未将 `specs/07-architecture.md` 列为改动）
+
+---
+
+## 第 11 次使用
+
+### 使用工具
+
+CodeBuddy（IDE 内置 AI 编码助手）
+
+### 使用阶段
+
+UML 建模（包图）
+
+### 输入 Prompt 摘要
+
+根据 `specs/07-architecture.md` 生成 PlantUML 包图并写入 `specs/08-package-diagram.puml`，要求：① 表达分层架构；② 表达主要包 `presentation` / `application` / `domain` / `infrastructure` / `dto` / `test`；③ 表达模块包 `reader` / `card` / `catalog` / `circulation` / `reservation` / `fine` / `admin`；④ 表达依赖方向；⑤ **Controller 不得直接依赖 Repository**；⑥ **Infrastructure 可以实现 Repository 接口**；⑦ **不要修改其他文件**。
+
+### Agent 修改文件
+
+- `specs/08-package-diagram.puml`（原为**空文件**，本次填充 **380 行** / 约 17.4 KB）
+
+### 输出摘要
+
+1. **单张 `@startuml` 图**（未新增图文件，符合第三条第 3 款「UML 清单固定 6 张、禁止新增平行文件」）。
+2. **分层架构**：`presentation` / `application` / `domain` / `infrastructure` 四个层包 + `common` 共享内核（对应 `07` §5.1 固定 5 个顶层包）+ 独立的 **Test Layer**（`src/test/java`）。
+3. **模块包 7 个**：`reader` / `card` / `catalog` / `circulation` / `reservation` / `fine` / `admin` 在四层中各出现一次（共 28 个模块包），纵向同构。
+4. **dto**：以 `application.<module>.dto` 子包表达（7 个，与 `07` §5.2 一致），其中 `circulation.dto` 展开显示 `BorrowCommand` / `ReturnCommand` / `LoanResult`；另 `assembler` 子包 2 个（`LoanAssembler` 标注 `DTO ↔ 领域`）。
+5. **依赖方向（4 类线型，图例说明）**：实线 = 允许的自上而下依赖（`presentation → application → domain`）；蓝色虚线 = `infrastructure` **实现**领域层接口（依赖倒置，非反向依赖）；绿色点线 = 测试依赖（仅测试期，允许跨层）；**红色点线 = 禁止的依赖（反例标注）7 条**。
+6. **Controller 禁直连 Repository（要求 ⑤）**：红色点线标注 `CirculationController ✗ LoanRepository`、`presentation.circulation ✗ infrastructure.persistence`，并在 `presentation` 注记中写明「禁止 `@Transactional`、禁止直接调用 Repository」。
+7. **Infrastructure 实现 Repository 接口（要求 ⑥）**：类级实现关系 `JpaLoanRepository ..|> LoanRepository`、`JpaItemCopyRepository ..|> ItemCopyRepository`；另 `BorrowPolicyProviderImpl ..|> BorrowPolicyProvider`、`FineRuleProviderImpl ..|> FineRuleProvider`、`AuditRecorderImpl ..|> AuditRecorder`；并给出 **`circulation` 纵向切片**：`Controller → 应用服务(dto/assembler) → 领域服务/实体 → Repository 接口 ← JPA 实现`。
+8. **禁止依赖清单（红色点线）**：Controller → Repository、表现层 → 基础设施 / 领域层（跨层直连）、领域层 → 应用层 / 表现层（反向）、领域层 → DTO、基础设施层 → 表现层。
+9. **Test Layer**：`domain`（无 Spring / 无 DB）/ `integration`（`@SpringBootTest` + H2 mem）/ `api`（MockMvc，含借书 / 还书 / 预约 / 超期罚款 / 权限失败五类测试类）/ `resources`（`application-test.yml` / `seed-test.sql`）；注记写明 H2 内存库、禁与文件模式混用、门禁五场景。
+10. **注记 6 处**：DTO 语义与约束、表现层硬约束、领域层硬约束、基础设施层硬约束、Test Layer 门禁、模块间依赖规则（`07` §5.3）。
+
+### 人工审查结果
+
+（待本人填写：审查结论与修改意见）
+
+审查时**至少**需裁决以下 5 点：
+
+1. **单张图承载 4 层 × 7 模块（约 60+ 元素）**是否需拆分 —— 拆分须新增 `.puml`，与第三条第 3 款冲突，须走第五条变更流程；
+2. **红色「禁止依赖」箭头**以反例形式出现在图中是否可接受（图例与注记已声明为禁令，避免被误读为实际依赖）；
+3. `dto` 画在**应用层各模块下**而非独立顶层包，与 `07` §5.1「顶层包固定 5 个」是否一致；
+4. 图中出现的**具体类名**（`BorrowCommand` / `LoanResult` / `JpaLoanRepository` / `LoanPO` 等）是否需在 `09-design-model.md` / `13-database-design.md` 中同步登记；
+5. 与 `07` §5.2 目录树的**逐项一致性**复核（含 `common` 与 `web/` 的表达方式）。
+
+### 测试结果
+
+**已做实机语法校验**（临时从 Maven Central 取得 `plantuml-8059.jar` 至系统临时目录，以 `java -jar plantuml.jar -tsvg` 渲染）：
+
+- **语法解析通过**，无 `Syntax error` / `Error line`；
+- 校验中**修正两处 PlantUML 不兼容写法**：① `package` 声明上的 `<<stereotype>>`；② 无块（no-block）嵌套包声明与 `class` 混排（改为补空块）；
+- **完整排版渲染未完成** —— 本机**未安装 Graphviz**（PlantUML 类 / 包图排版依赖），仅渲染出标题与图例，属**遗留事项**；
+- 校验用的 jar 与 SVG 产物已删除；一次 `-checkonly` 失败在 `specs/` 残留的 **0 字节 `08-package-diagram.png` 已删除**（第三条第 1 款禁止图片形式 UML 产物）；
+- 仍无代码，故无单元 / 集成测试。
+
+### Git 提交
+
+`56464da` 08包图（**已由人类提交**；本条登记时 `git status` 未将 `specs/08-package-diagram.puml` 列为改动）
+
+---
+
+## 第 12 次使用
+
+### 使用工具
+
+CodeBuddy（IDE 内置 AI 编码助手）
+
+### 使用阶段
+
+详细设计（数据库设计；`05` + `07` → `13`）
+
+### 输入 Prompt 摘要
+
+根据 `specs/05-domain-model.md`（v1.1）与 `specs/07-architecture.md`（v1.0）生成 `specs/13-database-design.md`：① 找出需要持久化的领域类；② 转换为关系模型；③ 每张表列出表名、字段名、类型、是否为空、主键、外键、唯一约束、默认值、说明；④ 必须包含 11 张表 —— `readers` / `borrow_cards` / `librarians` / `system_admins` / `book_titles` / `library_items` / `loans` / `reservations` / `borrow_policies` / `fine_rules` / `fine_records`；⑤ 说明索引设计；⑥ 说明领域继承到关系数据库的映射策略；⑦ **只修改** `specs/13-database-design.md`。
+
+### Agent 修改文件
+
+- `specs/13-database-design.md`（原为**空文件**，本次成文 **v1.0**，约 720 行）
+- 未修改 `00` / `01` 冻结基线（第五条第 2 款）与其他文件
+
+### 输出摘要
+
+1. **§0 冲突声明 4 项**（依第一条第 2 款先行指出、不静默绕过）：① 规则表命名 `borrow_policies` / `fine_rules` vs `constitution` 第七条第 3 款写作的 `borrowing_rule` / `fine_rule`（`DB-ASM-01`）；② `librarians` / `system_admins` 分表 vs `05` §4.15 单一 `AdminAccount` + `role` 枚举（`DB-ASM-02`）；③ `library_items.item_type` 落为派生冗余列 vs `05` `H-3`（`DB-ASM-03`）；④ 本轮留痕未登记（`DB-ASM-08`，由本次与第 13 次补登解除）。
+2. **持久化对象识别（§3）**：15 个需持久化的领域类 → 表；并列明「**不**持久化」清单 —— 值对象嵌入列（`Money` → `DECIMAL(10,2)`）、枚举列 + `CHECK`（不建字典码表）、派生状态（`hasUnpaidFine` / `isBlacklisted` / 在借副本数 / 未缴累计额）、队列容器（不建 `reservation_queues`）、会话（不建会话表）、读模型 DTO、纯技术列（默认不加 `created_at` / `updated_at`，仅保留 `version` 与领域要求的 `createdAt` / `occurredAt`）。
+3. **关系模型总览（§4）**：15 张表清单（11 张必需表 + `magazines` / `theses` / `item_copies` / `audit_logs`）+ **外键关系矩阵 13 处**（全部 `RESTRICT`，逻辑删除），并显式说明 3 处**故意不建外键**：`audit_logs`（弱引用，保留已注销读者与报废副本历史）、`borrow_policies` / `fine_rules`（按枚举键查找，跨聚合只以标识引用）、`system_admins`（未被引用）。
+4. **表结构详细设计（§5.1~§5.15）**：每张表 8 列字段表（字段名 / 类型（H2）/ 是否为空 / 主键 / 外键 / 唯一约束 / 默认值 / 说明）+ `CHECK` 清单 + 「**禁止**列」说明 —— 如 `borrow_cards` 禁 `valid_until` 与挂失 / 冻结列（`BR-025`、`R-12`）、`loans` 禁续借与 `fine_amount` 列（`BR-006`、`BR-009`）、`readers` 禁 `max_copies` / `loan_period_days` 与黑名单列（`BR-014`、`H-1`）。
+5. **关键不变量的 DB 兜底**：`ck_loans_return`（`status` 与 `return_date` 互为充要）、`ck_copies_hold` / `ck_resv_hold`（状态与到期时间一致）、`ck_fine_link`（`超期`↔`loan_id`、`赔偿`↔`copy_id`）、`uk_items_isbn_type`（`FR-006` 验收 7）、`uk_fine_loan_date`（同自然日幂等计提）、**计算列唯一索引** `loans.open_copy_key`（同一副本至多 1 条未还记录，`NFR-009` 第 3 条）与 `reservations.active_slot`（防并发重复预约）。
+6. **索引设计（§6）**：7 条原则（唯一性优先用约束表达、查询驱动、复合列序、外键列必建索引、低基数列不单独建、单表 ≤ 4 个二级索引、禁全文 / 函数索引）+ **39 条索引清单** + 「不建索引」的显式说明表。
+7. **继承映射策略（§7）**：三种标准策略对照（单表 / 连接表 / 每具体类一表）+ 三处决策 —— `DB-D-1` `Reader` 继承树 → **单表** `readers`，`reader_type` 兼作判别列（避免 `dtype` 与 `reader_type` 不一致的第二处真相，跨子类修正退化为一次 `UPDATE`）；`DB-D-2` `LibraryItem` → **连接表** `library_items` + `book_titles` / `magazines` / `theses`；`DB-D-3` `AdminAccount` → **每具体类一表** `librarians` + `system_admins`（附代价与补偿：跨表 `username` 唯一由应用层保证，备选 `JOINED` 父表 `admin_accounts`）。
+8. **值对象 / 枚举落库与 PO 对照（§7.4 / §7.5）**：8 个值对象与 8 个枚举的落库形态；15 个 PO ↔ 表 ↔ 领域对象对照，对齐 `07` §5.2 `infrastructure.persistence` 与 `07` §1 同步要求。
+9. **完整性分工（§8）与种子数据（§9）**：DB 层只承担取值域 / 唯一性 / 引用完整性 / 列间不变量 / 并发互斥；状态迁移与规则数值归领域层；**禁止**用触发器 / 存储过程 / 视图承载规则（第七条第 3 款）；种子 = 借阅规则 5 行 + 罚款规则 5 行 + 初始系统管理员 + 演示 / 测试数据，规则字面量**仅**允许出现在种子脚本（`07` §10.2）。
+10. **待确认与自检（§10 / §11）**：`DB-ASM-01`~`DB-ASM-08`（含 H2 计算列实测 `DB-ASM-05`、`isbn` 非空口径 `DB-ASM-04`、`student_no` 必填性 `DB-ASM-06`）；与上游一致性自检 12 项。
+
+### 人工审查结果
+
+（待本人填写：审查结论与修改意见）
+
+审查时**至少**需裁决以下 6 点：
+
+1. **§0 四项冲突**如何裁决 —— 尤其 `borrow_policies` / `fine_rules` 与 `constitution` 第七条第 3 款 `borrowing_rule` / `fine_rule` 的**表名分歧**（`DB-ASM-01`）：若以 `constitution` 为准须回写 `13` 全部表名与索引名；若以 `13` 为准须按第五条变更流程修订 `constitution`；
+2. **`librarians` / `system_admins` 分表**（`DB-ASM-02`）与 `05` §4.15 单一 `AdminAccount` 的口径差异是否认可，或改为 `JOINED` + 父表 `admin_accounts`；
+3. **`item_type` 落为派生冗余列**（`DB-ASM-03`）与 `05` `H-3` 的关系；
+4. **`library_items.isbn` 设为 NOT NULL**（`DB-ASM-04`）与论文 ISBN 的登记口径；
+5. **H2 2.x 计算列可建唯一索引**（`DB-ASM-05`）须在集成测试实测 —— 若不兼容，`uk_loans_open_copy` 与 `uk_resv_active_slot` 需退化为应用层维护列或行级锁；
+6. `13` 与 `07` §5.2 目录树 / `06` 类名 / `08` 包图的**逐项一致性**复核（`07` §1 同步要求、`08` 遗留事项 #17）。
+
+### 测试结果
+
+不适用（本阶段仅产出规格文档，尚无代码与自动化测试）。
+
+> **待验证项**：`DB-ASM-05` —— 计算列（`GENERATED ALWAYS AS`）语法及「计算列上建唯一索引」须在 H2 2.x 集成测试中实测，属 `15-test-plan.md` 的待测点。
+
+### Git 提交
+
+`b710e2a` 13数据库设计（**已由人类提交**；与第 13 次的 v1.0.1 补正在**同一提交**中落盘，故两条记录共用同一提交号）
+
+---
+
+## 第 13 次使用
+
+### 使用工具
+
+CodeBuddy（IDE 内置 AI 编码助手）
+
+### 使用阶段
+
+详细设计（按 7 项审查核查补正；`13` v1.0 → **v1.0.1**）
+
+### 输入 Prompt 摘要
+
+对 `specs/13-database-design.md` 逐条回答 7 项审查核查：① `borrow_card.card_no` 是否唯一；② `library_item.barcode` 是否唯一；③ `loans` 是否能区分借出、已还、超期；④ `reservations` 是否能支持排队；⑤ `fine_rules` 是否能支持不同借出物类型；⑥ `borrow_policies` 是否能支持不同读者类型；⑦ 是否存在必要外键。随后**执行第 3 项补正** —— 在 §5.10 增补「超期为派生状态、不建列」的显式说明，并把「不建 `barcode` 列」与「命名口径差异」登记为 `DB-ASM-09` / `DB-ASM-10`。
+
+### Agent 修改文件
+
+- `specs/13-database-design.md`（v1.0 → **v1.0.1**，734 行）
+- 未修改 `00` / `01` 冻结基线（第五条第 2 款）与其他文件
+
+### 输出摘要
+
+1. **7 项核查结论**（随后写入 `13` 附录 B）：① 借阅证号唯一（`borrow_cards.card_number` + `uk_cards_number`，并列 `uk_cards_reader` 保证 1:1）；② **不建** `barcode` 列，唯一性由 `item_copies.copy_number` + `uk_copies_number` 承担（`BR-019`）；③ `loans` 以 `status`（在借 / 已还）+ `return_date` 区分借出与已还（`ck_loans_return` 强制充要），**超期为派生判定**（`status='在借' AND due_date < 今日`），由 `Loan.isOverdue()` 计算、不落列；④ 排队由 `queue_position` + `reserved_at` 双排序键与 `idx_resv_queue` 支撑，不建 `reservation_queues` 表；⑤ `fine_rules.item_type` 唯一键 + 5 值 CHECK；⑥ `borrow_policies.reader_type` 唯一键 + 5 值 CHECK；⑦ 13 处必要外键齐全，另有 3 处故意不建。
+2. **§5.10 新增条目「超期为派生状态、不建列」**：给出判定式、由 `Loan.isOverdue()` / `overdueDays()` 计算的归属、不落列的理由（超期是「当前日期」与 `due_date` 的函数，落列需每日批量更新且会与 `status` 形成第二处真相，`H-1`），并指出查询侧由 `idx_loans_status_due (status, due_date)` 支撑 `UC-21` 扫描、计提幂等由 `fine_records.uk_fine_loan_date` 保证。
+3. **§10 新增两条待确认**：`DB-ASM-09`（不建 `barcode` 的三条依据：`05` §5 只有 `CopyNumber`、`item_copies.copy_number` 已承担唯一性、`02` §2.3 不做清单含条码扫描；若裁决新增须先走第五条变更流程修订 `05` / `02`，不得在 `13` 直接加列）与 `DB-ASM-10`（单数表名 / 缩写列名 `borrow_card.card_no` vs 复数表名 / snake_case 全称 `borrow_cards.card_number`，语义等价，须确认以哪套为准并同轮重命名 + 同步 `07` PO 对照）。
+4. **留痕与自检**：版本号 v1.0 → v1.0.1、文件头「本次修订」说明、附录 A 新增 v1.0.1 记录、**新增附录 B 审查项自检对照（7 项）**（逐项结论 + 证据 + 处理）。
+5. **未做实质口径改动**：`barcode` 未加列、命名未重命名 —— 二者涉及基线术语，依第二条第 4 款与第十三条须先裁决。
+
+### 人工审查结果
+
+（待本人填写：审查结论与修改意见）
+
+审查时**至少**需裁决以下 4 点：
+
+1. **`DB-ASM-09` `barcode`**：确认不建该列（唯一性由 `copy_number` 承担），或走第五条变更流程在 `05` / `02` 中新增该术语后再回写 `13`；
+2. **`DB-ASM-10` 命名口径**：确认采用复数表名 + snake_case 全称，或全文件改用 `borrow_card.card_no` 等缩写（须同步 `07` §7.5 PO 对照与索引命名）；
+3. **「超期为派生状态、不建列」**是否与 `05` §4.10（`isOverdue()`）与 `H-1`（派生状态不落库）的口径一致；若实现期希望以状态列承载，须先修订 `05` 再改 `13`；
+4. 附录 B 其余 6 项结论（唯一性、排队、两类规则分档、外键）是否认可，其中 `librarians` / `system_admins` 分表带来的**跨表 `username` 唯一由应用层保证**是否可接受（`DB-ASM-02`）。
+
+### 测试结果
+
+不适用（本阶段仅产出规格文档，尚无代码与自动化测试）
+
+### Git 提交
+
+`b710e2a` 13数据库设计（与第 12 次的 v1.0 首版**在同一提交**中落盘；两条记录共用同一提交号）
+
+---
+
+## 第 14 次使用
+
+### 使用工具
+
+CodeBuddy（IDE 内置 AI 编码助手）
+
+### 使用阶段
+
+留痕（`19` 本文件补登记与遗留事项更新，落实 `E3` / NFR-007 / 第四条第 5 款）
+
+### 输入 Prompt 摘要
+
+阅读 `specs/19-ai-usage-log.md` 与本轮对话中有变动的文件（`specs/13-database-design.md`），**继续填充本文件**：补登 `13` 的两次使用（第 12、13 次），并在文件结尾更新「遗留事项」。
+
+### Agent 修改文件
+
+- `specs/19-ai-usage-log.md`（在第 11 次之后新增第 12~14 次记录；结尾「遗留事项」表更新 #14 / #21 并新增 #24~#32）
+- 未修改 `13-database-design.md` 及其他文件（本轮未再改动 `13`，其工作区内容与提交 `b710e2a` 一致）
+
+### 输出摘要
+
+1. **补登第 12 次**（`13` v1.0 成文：15 张表、索引设计、继承映射策略 `DB-D-1`~`DB-D-3`）与**第 13 次**（`13` 按 7 项审查核查补正至 v1.0.1：超期派生说明、`DB-ASM-09` / `DB-ASM-10`、附录 B），填补本文件遗留事项 #14 登记的「`13` 仍无对应使用记录」缺口。
+2. **新增第 14 次**（本条）记录本次补登动作本身（与第 3 次「新建本文件并自登记」的处理一致）。
+3. **遗留事项表更新**：#14 状态由「部分已处理（`13` 待补登）」改为**已处理**；#21 更新为「第 1~11 次已由人类提交（`60a1c22`），第 12~14 次尚未提交」；新增 #24~#32，覆盖 `13` 的 4 项冲突与 `DB-ASM-01`~`DB-ASM-10` 裁决、H2 计算列实测、`13` 与 `05` / `06` / `07` / `08` 的一致性复核、风险登记 `17-risk-analysis.md`、以及后续文档与代码的续登要求。
+4. **未登记的文件说明**：`09-design-model.md`、`10`/`11`/`12` 时序图（`.puml`）、`14`~`18` 目前仍为 **0 字节占位文件**，未产生 Agent 产出，故本轮不新增记录；其成文时须逐条续登。
+
+### 人工审查结果
+
+（待本人填写：审查结论与修改意见）
+
+> 说明：本条为**日志自身的补登记**，不改变任何规格口径；`13` 的实质裁决仍按第 12、13 次的「人工审查结果」执行。
+
+### 测试结果
+
+不适用（本阶段仅维护留痕文件，无代码与自动化测试）
+
+### Git 提交
+
+**未提交**（本条登记时 `git status --porcelain` 显示 ` M specs/19-ai-usage-log.md`；依第十一条第 2 款 / 第五条第 6 款，提交须由本人明确指令后执行）
+
+---
+
+## 遗留事项（交付前门禁相关）
+
+| # | 事项 | 依据 | 状态 |
+|---|---|---|---|
+| 1 | 第 6 次（生成 `04` 用例图）、第 7 次（成文 `05` v1.0）、第 8 次（`05` v1.1 审查补正）、**第 9 次（生成 `06` 领域类图）**四条记录的「人工审查结果」待人类补齐；每条目所列裁决点需逐条表态 | 第四条第 2 款 | 待人类 |
+| 2 | `04-use-case-model.puml` **仍未做实机渲染校验**（`06` 已于第 9 次校验通过）；校验能力已具备 —— 本机有 JRE 26，并已临时取得 `plantuml-1.2024.7.jar`，可对 `04` 补验 | 第三条第 5 款、附则 A #1 | 待验证 |
+| 3 | `06-domain-class-diagram.puml` 已按 `05` v1.1 的继承树（§3.2）、类清单与属性方法（§4）、聚合边界（§3.3）重绘完成，并已通过 PlantUML 渲染 | 第十一条第 4 款、第三条第 3 款 | **已处理**（见第 9 次），待人工审查 |
+| 4 | 第 7、8 次（ `05` v1.0 成文与 v1.1 补正）合并在同一提交 `ffe5af1`；若要求逐次留痕，须由人类拆分为两次提交 | 第四条、第五条 | 待人类决定 |
+| 5 | `03` 第 7.1 节的假设 `H-1`~`H-5` 与 `05` 第 10 节的 `H-1`~`H-4`、附录 A 的 3 项遗留风险，一并登记到 `17-risk-analysis.md` | 第四条第 4 款、第十一条第 3 款 | 待登记 |
+| 6 | `05` v1.1 依赖但未决的 `TBD-002`（影响 D-1 建模方案）、`TBD-003`、`TBD-006`、`TBD-007`、`TBD-010`、`TBD-012` 待人类裁决 | `02` 第 7 节、第二条第 3 款 | 待人类 |
+| 7 | `02` v1.1、`03` v1.0 的「人工审查结果」字段此前已待人类补齐，本轮仍未收到结论 | 第四条第 2 款 | 待人类 |
+| 8 | 本文件第 4~**9** 次条目（含本轮新增）尚未提交，`git status` 显示仅 `specs/19-ai-usage-log.md` 为已修改状态 | 第五条第 6 款（Agent 不得自行提交） | 待人类提交 |
+| 9 | 使用工具**统一登记为 CodeBuddy**：文件头部「使用工具」已由 `Claude Code / Codex / OpenCode` 改为 `CodeBuddy（IDE 内置 AI 编码助手）`，第 1~14 次条目的「使用工具」字段已全部统一 | 第四条第 5 款、第十三条 | **已处理** |
+| 10 | 后续每次生成（代码、测试及其余规格文档）须在本文件续登一条记录 | `E3`、第四条第 5 款 | 持续 |
+| 11 | 第 9 次记录（`06` 领域类图）的「人工审查结果」与「Git 提交」字段待人类补齐；其中 5 项裁决点（子类 vs 可变 `readerType`、5 个补齐枚举、领域服务 / Provider 接口去留、图幅是否拆分、与 `05` §4 逐类一致性）需逐条表态 | 第四条第 2 款 | 待人类 |
+| 12 | `06` 中由 Agent 补齐的 `Language` / `AdminStatus` / `Action` / `ActionType` / `Result` 五个枚举**未在 `05` §5 枚举表中列出**：须二选一 —— 补登记进 `05`，或从类图移除 | `05` §5、第十一条第 4 款 | 待人类裁决 |
+| 13 | `06` 与 `05` v1.1 §4 的属性 / 方法逐类一致性、以及与 `07-architecture.md` / `08-package-diagram.puml` / `13-database-design.md` 的类名一致性待复核 | 第十一条第 4 款 | 待复核 |
+| 14 | `07` / `08` / `13` 已分别提交（`9dbdc5b` / `56464da` / `b710e2a`）：已补登 **`07`（第 10 次）**、**`08`（第 11 次）**、**`13`（第 12 次 v1.0 成文 + 第 13 次 v1.0.1 审查补正）**；`13` 的留痕缺口（`13` §0 冲突 4 / `DB-ASM-08`）由此解除，但 `13` 文件头「留痕」字段与 §10 `DB-ASM-08` 的状态**待同轮回写** | `E3`、第四条第 5 款 | **已处理**（见第 12、13 次）；`13` 内状态回写待办 |
+| 15 | 第 10 次（成文 `07` v1.0）、第 11 次（生成 `08` 包图）两条记录的「人工审查结果」待人类补齐；每条目所列裁决点（7 项 / 5 项）需逐条表态 | 第四条第 2 款 | 待人类 |
+| 16 | `07` §14 的假设 `ASM-01`~`ASM-08`（顶层包 5 个与根包名、DTO 归属应用层、PO 映射是否用 MapStruct、`ArchUnit` 是否引入、`Action` 枚举细分、登记冲突、前端目录）及其引用的 `TBD-002` / `004` / `005` / `006` / `007` / `008` / `009` / `010` / `012` 须登记到 `17-risk-analysis.md` | 第四条第 4 款、第十一条第 3 款 | 待登记 |
+| 17 | `08` 包图与 `07` §5.2 目录树、`06` 类名、`13` 持久对象的**逐项一致性**待复核；图中新增的具体类名（`BorrowCommand` / `LoanResult` / `JpaLoanRepository` / `LoanPO` 等）是否需在 `09-design-model.md` / `13-database-design.md` 中同步 | 第十一条第 4 款 | 待复核 |
+| 18 | `08`（及第 6 次遗留的 `04-use-case-model.puml`）**完整排版渲染未完成** —— 本机**未安装 Graphviz**（PlantUML 类 / 包图排版依赖），本轮仅完成**语法级校验**（无 syntax error） | 第三条第 5 款、附则 A #1 | 待验证 |
+| 19 | `07` §5.1 顶层包**固定 5 个**（含 `common`）与根包名 `com.example.library` 待人类确认；`08` 已按 `07` 绘制，二者须逐包一致 | `07` §5.1 / `ASM-01` / `ASM-02` | 待人类确认 |
+| 20 | 是否引入 **`ArchUnit`**（编译期分层依赖校验）与 **`MapStruct`**（PO ↔ 领域映射）—— 均属新增第三方依赖，须说明理由并取得人类同意；当前**均未引入** | 第十二条第 4 款、`07` `ASM-04` / `ASM-05` | 待人类同意 |
+| 21 | 本文件第 1~**11** 次条目**已由人类提交**（`60a1c22` 前十次ai使用）；**第 12~14 次尚未提交** —— `git status` 当前仅显示 `specs/19-ai-usage-log.md` 为已修改状态 | 第五条第 6 款（Agent 不得自行提交） | 待人类提交 |
+| 22 | 使用工具**统一为 CodeBuddy**（同 #9）：头部清单与各条目已一并统一，原 `Claude Code / Codex / OpenCode` 列举不再保留 | 第四条第 5 款、第十三条 | **已处理** |
+| 23 | 后续每次生成（`09-design-model.md`、`10`~`12` 时序图、 `14-api-spec.md` / `15-test-plan.md` / `16-tasks.md` / `17-risk-analysis.md` / `18-review-checklist.md` 及代码、测试）须在本文件续登一条记录；编号自**第 15 次**起顺延 | `E3`、第四条第 5 款 | 持续 |
+| 24 | `13` §0 的**四项冲突待人类裁决**：① 表名 `borrow_policies` / `fine_rules` vs `constitution` 第七条第 3 款写作的 `borrowing_rule` / `fine_rule`（`DB-ASM-01`，若以 `13` 为准须按第五条变更流程修订 `constitution`）；② `librarians` / `system_admins` 分表 vs `05` §4.15 单一 `AdminAccount` + `role`（`DB-ASM-02`，含跨表 `username` 唯一由应用层保证）；③ `library_items.item_type` 派生冗余列 vs `05` `H-3`（`DB-ASM-03`）；④ 留痕（`DB-ASM-08`，已补登，`13` 内状态待回写） | 第一条第 2 款、第十三条、第二条第 4 款 | 待人类裁决 |
+| 25 | `13` 的 `DB-ASM-04`（`library_items.isbn` NOT NULL 与论文 ISBN 登记口径）、`DB-ASM-06`（`readers.student_no` 是否必填）待裁决；若改可空须同步调整 `uk_items_isbn_type` 与 `ck_readers_identity` | `13` §10 | 待人类裁决 |
+| 26 | `DB-ASM-05`：**H2 2.x 计算列**（`loans.open_copy_key`、`reservations.active_slot`）及其上唯一索引须在集成测试实测；若不兼容，`uk_loans_open_copy` / `uk_resv_active_slot` 须退化为「应用层维护可空列 + 唯一索引」或行级锁 | `07` §9.5、`NFR-009` 第 3 条 | 待验证（`15-test-plan.md`） |
+| 27 | `DB-ASM-09`（**不建** `barcode` 列）与 `DB-ASM-10`（命名口径：`borrow_card.card_no` vs `borrow_cards.card_number`、单数表名 vs 复数表名）待裁决；若采用缩写命名，须全文件重命名并同步 `13` §7.5 PO 对照与 `07` §5.2 | 第二条第 4 款、`02` §2.3 | 待人类裁决 |
+| 28 | `13` v1.0.1 附录 B 的 7 项核查结论待人工确认；其中「**超期为派生状态、不建列**」须与 `05` §4.10 `isOverdue()` 及 `H-1`（派生状态不落库）保持同一口径，若改为状态列承载须先修订 `05` | 第十一条第 4 款、`05` §4.10 | 待人类确认 |
+| 29 | `13` 的 `DB-ASM-01`~`DB-ASM-10` 及其引用的 `TBD-002` / `003` / `006` / `007` / `008` / `010` / `012` 须登记到 `17-risk-analysis.md`（该文件当前为 0 字节占位） | 第四条第 4 款、第十一条第 3 款 | 待登记 |
+| 30 | `13` 与 `07` §5.2 的 `infrastructure.persistence`（PO 对照见 `13` §7.5）、`06` 领域类图类名、`08` 包图逐项一致性待复核；`08` 图中新增的类名（`LoanPO` / `JpaLoanRepository` 等）须与 `13` 的 PO 命名一致 | `07` §1 同步要求、第十一条第 4 款 | 待复核 |
+| 31 | `09-design-model.md`、`10` / `11` / `12` 时序图（`.puml`）、`14`~`18` 目前均为 **0 字节占位文件**：须按 `07` / `13` 的设计成文；`10`~`12` 成文时不得新增第 7 张 `.puml`（第三条第 3 款），且 `11` 还书时序**不得**含缴费步骤（`R-16`） | 第三条第 3 款、第十条第 2 款 | 待成文 |
+| 32 | 本文件第 12~14 次条目尚未提交；`git status` 仅 `specs/19-ai-usage-log.md` 为已修改状态（`13` 已随 `b710e2a` 提交） | 第五条第 6 款 | 待人类提交 |
